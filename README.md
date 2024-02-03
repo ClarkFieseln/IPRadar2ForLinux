@@ -26,3 +26,7 @@ For more information you can check the Windows variant of this tool, which is ve
 ## IPRadar (video playlist of original version)
 
 [Video Playlist (original version)](https://www.youtube.com/watch?v=EBGdES2b-zE&list=PLX24fhcibpHUbVMLRvzB5kC9kmXOvMXq_ "IP Radar (original SW) Video Playlist")
+
+## PyPI project
+
+[PyPI project](https://pypi.org/project/ipradar2/ "PyPI project")
