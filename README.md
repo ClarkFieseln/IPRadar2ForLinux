@@ -16,12 +16,12 @@ And check READ_ME.txt for more information.
 ## Intrusion Detection and Prevention in Real Time Based e.g. on Geographical Locations of Hosts
 
 <!-- # ![plot](./IPRadar2/img/app2.jpg) -->
-![plot](https://raw.githubusercontent.com/ClarkFieseln/IPRadar2ForLinux/master/IPRadar2/img/app2.jpg)
+![plot](https://raw.githubusercontent.com/ClarkFieseln/IPRadar2ForLinux/main/IPRadar2/img/app2.jpg)
 
 ## Main Window
 
 <!-- ![plot](./IPRadar2/img/app1.jpg) -->
-![plot](https://raw.githubusercontent.com/ClarkFieseln/IPRadar2ForLinux/master/IPRadar2/img/app1.jpg)
+![plot](https://raw.githubusercontent.com/ClarkFieseln/IPRadar2ForLinux/main/IPRadar2/img/app1.jpg)
 
 ## IP Radar (original version)
 
