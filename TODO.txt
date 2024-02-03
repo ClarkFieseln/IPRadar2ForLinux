@@ -1,0 +1,188 @@
+###########################
+# adapt code to fulfill PEP 8 with 120 characters width
+#     autopep8 --in-place --recursive [path/to/directory]
+#     or
+#     autopep8 --in-place autopep8 --in-place --aggressive --aggressive --recursive [path/to/directory]
+###########################
+
+###########################
+# add IPv6 support
+# for now, to cover "all" network traffic you need to deactivate IPv6 on your network interface.
+###########################
+
+###########################
+# correct BUG: sometimes connections are not shown
+###########################
+
+###########################
+# filter "Show selected countries", similar to "Show selected owners"
+###########################
+
+###########################
+# IGNORE IPs in a predefined netmask
+# e.g. to avoid processing specific subnetworks, when connected over SSH, which are otherwise considered to be global IPs (?)
+###########################
+
+###########################
+# OFFLINE Mode: with local geoIP-DB and previously stored files with host information
+###########################
+
+###########################
+# add a progress bar when opening files?...it may take some time until the tool reacts
+###########################
+
+###########################
+# use rx_kB and tx_kB instead of rx and tx in nodes
+# add defines for paths like IPRadar2/Output/
+###########################
+
+###########################
+# peaks of CPU usage sometimes (?): after some time of a CPU-usage-peak it then goes back to almost zero,
+# is memory then "garbage-collected"?
+# find out if we need to manually call gc and exactly when, or use another solution
+###########################
+
+###########################
+# implement kill beyond bandwidth
+# see killSetting() in mainWindow.py
+###########################
+
+###########################
+# implement MAX_RX_KILOBYTES, similar to MAX_TX_KILOBYTES
+# RX on a remote host could mean that "we" are transmitting too much information to it
+###########################
+
+##################
+# show current connections that are:
+# waiting/listening also with a symbol on the side towards corresponding IP
+##################
+
+##################
+# implement "distance rings" to make it look more like a radar console
+##################
+
+##################
+# show TRACERT results on the map (as we did in the original IPRadar)
+##################
+
+##################
+# show HEATMAP
+##################
+
+###########################
+# if possible, reduce the size of the generated executable file
+# e.g. last step: use of pyinstaller with a different/smaller virtual environment?
+###########################
+
+###########################
+# remove WORKAROUND in processor.py:
+# no GeodesicPolyLine() drawn when too short - currently solved with the WORKARDOUND to first check if we actually need geodesics or not
+###########################
+
+###########################
+# use DbIpCity.get(self.public) to get own geolocation when settings MY_CITY, etc. in config.ini are empty
+###########################
+
+###########################
+# add an "interface" between the .html map and IPRadar2
+# in order to have a smooth update of infos on the browser
+# e.g. INTERACTIVE MAP (as we did in old IPRadar):
+# * select line and show infos (RX, TX bytes, timestampt)... Labels on the map
+# * select host on GUI after selection on maps
+# * set/unset BAD directly on browser or in the list (manually)
+# * etc.
+###########################
+
+###########################
+# search in IPs - or SORT - use Table
+###########################
+
+#########################################
+# clean up code:
+#    check TODOs
+#    rename functions and variables
+#    remove trick to avoid "circular imports" ?
+#    remove obsolete code
+#    remove deprecated counters for failed-past, resol-past on GUI (hidden below):
+#        statusHostsRequested, statusHostsFailed, statusHostsFailedOld, statusHostsResolvedOld
+#    add further ToolTips
+#########################################
+
+#################
+# check if we can use playsound() as root to play different sounds "at the same time"
+# now we get the following error when trying to play the same sound from different threads simultaneously:
+#     AL lib: (EE) ALCplaybackAlsa_open: Could not open playback device 'default': Device or resource busy
+#################
+
+#################
+# implement live capture on/off
+#################
+
+###########################
+# when asking if we want to Kill, show also the affected process(es), ports, etc.
+###########################
+
+###########################
+# USE_DOUBLE_BUFFER (queues A, B) based on a configuration option
+###########################
+
+###########################
+# bocking rule of a RANGE of IPs, extracted from infos obtained with whois
+###########################
+
+###########################
+# check against sanitized_ip:
+# check/remove workaround in processor.py
+###########################
+
+###########################
+# out to console & file "simultaneously"
+# > pipe ? script ? 
+# fork stdout and stderr both to file and to shell ?
+###########################
+
+###########################
+# replace lists with dicts
+# to avoid for [] + for [] every time..
+###########################
+    
+###########################
+# set Labels for known IPs "manually"
+# and then store in file
+###########################
+
+###########################
+# when blocking consider also additional critria like time-window,
+# network protocol, port number, etc.
+###########################
+
+###########################
+# add-blocking-rule-to-firewall:
+# not only adding rule when host resolved, but also later if re-enabled
+###########################
+
+###########################
+# PORTS SCANNER e.g. on suspicious nodes
+# what for? which ports? too mucho noise/visibility?
+# or to show attacker that we've seen him...but a ping may be enough
+###########################
+
+########################
+# killed-IPs get lost when reading log_DATE.pcapng alone...
+# the information killed=True is in the corresponding report_DATE.txt, it can be parsed from there,
+# or store these infos better somewhere else, e.g. in a killed.txt/npy file.
+########################
+
+##################
+# add IPs detected with netstat which are NOT in node_dict...e.g. connections established "before" running IPRadar2
+##################
+
+##################
+# integrate the tool with snort, suricata, ...but how exactly?
+##################
+
+##################
+# load under "extreme conditions":
+# some IPs are missed e.g. when doing a "speedtest" while opening other tabs on the browser
+# -> too much traffic?...bottleneck in pyshark or in IPRadar2 ?
+##################

@@ -1,0 +1,1 @@
+output folder used when IPRadar2 is run in an IDE like PyCharm

@@ -1,0 +1,5 @@
+Copy the .mp3 files from the folders Sound and Sound/Alarm one level above.
+Feel free to use the sounds you like the most. 
+Put your files here replacing the original ones with exactly the same name and extension.
+Then you don't need to modify the code.
+

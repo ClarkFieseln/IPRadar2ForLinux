@@ -1,0 +1,13 @@
+getmac~=0.8.2
+ip2geotools~=0.1.6
+playsound~=1.2.2
+psutil~=5.9.8
+pycountry~=19.8.18
+PyQt5~=5.15.10
+pyshark~=0.6
+pythonping~=1.0.8
+Requests~=2.31.0
+
+folium~=0.15.1
+geographiclib~=2.0
+

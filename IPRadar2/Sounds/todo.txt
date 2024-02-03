@@ -1,0 +1,33 @@
+this is how this folder shall look like to match the code:
+ 
+>tree /F
+│   smb_jump-small.mp3
+│   smb_stomp.mp3
+│   smb_kick.mp3
+│   smb_flagpole.mp3
+│   smb_bump.mp3
+│   smb_bowserfalls.mp3
+│   smb_mariodie.mp3
+│   todo.txt
+│
+└───Alarm
+        salamisound-4299638-alarm-sirene-13-mal-heulen.mp3
+        salamisound-8723691-alarm-sirene-auto.mp3
+
+The files in folder Alarm can be obtained from these links:
+https://www.salamisound.de/4299638-alarm-sirene-13-mal-heulen
+https://www.salamisound.de/8723691-alarm-sirene-auto
+
+You can get the first 7 .wav files I used from here:
+https://themushroomkingdom.net/media/smb/wav
+and from here:
+https://zachd.com/mario/mario%20current%20desktop/
+
+you can then convert them to .mp3 using Audacity:
+sudo apt install audacity
+or VLC:
+sudo apt install vlc
+
+or you can use the .wav files directly by changing the extensions to .wav in the code.
+
+

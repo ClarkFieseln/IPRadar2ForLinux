@@ -1,0 +1,1 @@
+output folder used when IPRadar2 is run as an executable file (called ipradar2)
