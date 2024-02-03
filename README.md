@@ -11,7 +11,7 @@ For more information you can check the Windows variant of this tool, which is ve
 
 ## Quickstart
     $ pip install ipradar2
-And check READ_ME.txt for more information.
+And check [READ_ME.txt](https://github.com/ClarkFieseln/IPRadar2ForLinux/blob/main/READ_ME.txt "READ_ME.txt") for more information.
 
 ## Intrusion Detection and Prevention in Real Time Based e.g. on Geographical Locations of Hosts
 
