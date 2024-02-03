@@ -1,7 +1,7 @@
 # IPRadar2 for Linux
 
 ## Quickstart
-    $ pip install ipradar2
+    pip install ipradar2
 And check [READ_ME.txt](https://github.com/ClarkFieseln/IPRadar2ForLinux/blob/main/READ_ME.txt "READ_ME.txt") for more information.
 
 ## Overview
