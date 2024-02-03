@@ -23,6 +23,6 @@ And check [READ_ME.txt](https://github.com/ClarkFieseln/IPRadar2ForLinux/blob/ma
 <!-- ![plot](./IPRadar2/img/app1.jpg) -->
 ![plot](https://raw.githubusercontent.com/ClarkFieseln/IPRadar2ForLinux/main/IPRadar2/img/app1.jpg)
 
-## IP Radar (original version)
+## IPRadar (video playlist of original version)
 
 [Video Playlist (original version)](https://www.youtube.com/watch?v=EBGdES2b-zE&list=PLX24fhcibpHUbVMLRvzB5kC9kmXOvMXq_ "IP Radar (original SW) Video Playlist")
