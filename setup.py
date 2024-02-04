@@ -12,7 +12,7 @@ HERE = pathlib.Path(__file__).parent
 # The text of the README file
 README = (HERE / "README.md").read_text()
 
-__version__ = "0.0.11"
+__version__ = "0.0.3"
 
 # This call to setup() does all the work
 setup(
@@ -38,10 +38,11 @@ setup(
         "Operating System :: POSIX :: Linux",
         "Topic :: Security",
     ],
-    packages= ["IPRadar2", "IPRadar2/ui"],  # find_packages(),
-    #package_data={
-    #    '.': ['IPRadar2/Config/config.ini', 'IPRadar2/Config/locationsResolved.json'],
-    #},
+    packages= ["IPRadar2"],  # find_packages(),
+    package_data={
+        '.': ['IPRadar2/Icons/*.png'],
+        # '.': ['IPRadar2/Config/config.ini', 'IPRadar2/Config/locationsResolved.json'],
+    },
     #exclude_package_data={
     #    'Icons': ['IPRadar2/Icons/marker-dot-icon.png', 'IPRadar2/Icons/marker-icon.png'],
     #    'img': ['IPRadar2/img/app1.jpg', 'IPRadar2/img/app2.jpg'],
