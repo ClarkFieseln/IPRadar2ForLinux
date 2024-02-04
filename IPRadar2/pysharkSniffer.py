@@ -18,7 +18,7 @@ import asyncio
 
 
 
-class pysharkSniffer:   
+class pysharkSnifferClass:   
     threadForSniffing = 0 
     threadForPacketProcessing = 1
     capture = 0
