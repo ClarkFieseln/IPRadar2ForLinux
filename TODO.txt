@@ -90,6 +90,8 @@
 # * select line and show infos (RX, TX bytes, timestampt)... Labels on the map
 # * select host on GUI after selection on maps
 # * set/unset BAD directly on browser or in the list (manually)
+# * need files requirements.txt and configuration.py in folder dist_exec/IPRadar2 ?
+#   or pyvenv.cfg on top folder?
 # * etc.
 ###########################
 
