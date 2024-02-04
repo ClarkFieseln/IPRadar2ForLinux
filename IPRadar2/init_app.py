@@ -62,6 +62,40 @@ if not os.path.exists(file_path):
     else:
         print("Error: could not create default config.ini file.")
 
+# check if Icons folder exists and create otherwise
+# the user has now the opportunity to replace the icons if he wants
+# TODO: instead, we could read the icons directly from the package_installation_path
+folder_path = "IPRadar2/Icons" # relative path to output folder
+if not os.path.exists(folder_path):
+    os.mkdir(folder_path)
+    print("Folder " + folder_path + " created!")
+
+# check if marker-icon.png file exists and create otherwise
+file_path = "IPRadar2/Icons/marker-icon.png"  # relative path to file
+if not os.path.exists(file_path):
+    print("Warning: marker-icon.png not found in current path.")
+    # check for installation file to use as default
+    source = get_package_installation_path("ipradar2")
+    if source is not None:
+        source = source + "/IPRadar2/Icons/marker-icon.png"
+        copyfile(source, file_path)
+        print("Warning: copied marker-icon.png from default installation!")
+    else:
+        print("Error: could not create default marker-icon.png file.")
+
+# check if marker-dot-icon.png file exists and create otherwise
+file_path = "IPRadar2/Icons/marker-dot-icon.png"  # relative path to file
+if not os.path.exists(file_path):
+    print("Warning: marker-dot-icon.png not found in current path.")
+    # check for installation file to use as default
+    source = get_package_installation_path("ipradar2")
+    if source is not None:
+        source = source + "/IPRadar2/Icons/marker-dot-icon.png"
+        copyfile(source, file_path)
+        print("Warning: copied marker-dot-icon.png from default installation!")
+    else:
+        print("Error: could not create default marker-dot-icon.png file.")
+
 # check if locationsResolved.json file exists and create otherwise
 file_path = "IPRadar2/Config/locationsResolved.json" # relative path to file
 if not os.path.exists(file_path):
