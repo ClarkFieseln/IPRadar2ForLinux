@@ -56,8 +56,12 @@ Please consider this when using the tool.
    (but first check step 5), you need some PyQt tools)
     
 3) Configure config.ini as required.
-   Note that there is one config.ini file for the executable and a different one when using an IDE like PyCharm:
-       IPRadar2/Config/config.ini        (for IDE - e.g. PyCharm)
+   When using pip install, the default folders and files will be created on first run:
+       IPRadar2/Config/config.ini
+       IPRadar2/Config/locationsResolved.json
+       IPRadra2/Output/...
+   When working with the code, there is one config.ini file for the executable and a different one when using the IDE:
+       IPRadar2/Config/config.ini                      (for IDE - e.g. PyCharm)
        IPRadar2/dist_exec/IPRadar2/Config/config.ini   (for executable)
    IMPORTANT: 
        Note that the default values are just arbitrary and need to be adapted!
@@ -107,7 +111,7 @@ Please consider this when using the tool.
    The generated file ipradar2 will be inside the folder /dist_exec
    Generate an executable file in the system environment:
    ######################################################
-   Be aware you will make packages available to the whole system!
+   Be aware that in this case you will make packages available to the whole system!
    Check the access rights of gen_exec_in_system.sh and allow execution if required.
        double-click on gen_exec_in_system.sh
        (select: execute in a terminal)
@@ -117,20 +121,20 @@ Please consider this when using the tool.
    Enter the sudo password when asked.
    The generated file ipradar2 will be inside the folder /dist_exec
 
-7) Now you can now execute the file ipradar2 from the terminal:
+7) Now you can execute the file ipradar2 from the terminal:
        if you want to use the virtual environment type first:
            source IPRadar2_venv/bin/activate
        if you have not yet restarted or logged out after step 5), you may need change your default group again:
            newgrp wireshark
        now step into folder dist_exec with "cd dist_exec" and run the program with:
-       ./ipradar2
+           ./ipradar2
        (in this case no firewall rules will be added because you don't have root privileges)
        or with:
-       sudo ./ipradar2
+           sudo ./ipradar2
        (button Show Map disabled - root cannot open browser => open the .html file from the file explorer or terminal instead,
        and no sounds supported - root cannot play different sounds at the "same" time)
    Of course you can also just double-click on the executable file to run it.
-   If you select the option to "run in a terminal" you will be able to see the output when directed to the console.
+   If you select the option to "run in a terminal" you will be able to see the output when it is directed to the console.
 
 8) Check the Code Project article IPRadar2 that explains how to use the Windows version of the tool, which is similar:
        https://www.codeproject.com/Articles/5269206/IP-Radar-2
