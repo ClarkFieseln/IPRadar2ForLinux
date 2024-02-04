@@ -1,5 +1,5 @@
-python3 -m PyQt5.uic.pyuic -x ui/mainWindow.ui -o ui/Ui_mainWindow.py --import-from=dist.icons
-echo "Please replace in ui/UI_mainWindow.py as indicated:"
+python3 -m PyQt5.uic.pyuic -x mainWindow.ui -o Ui_mainWindow.py
+echo "Please replace in UI_mainWindow.py as indicated:"
 echo "###################################################"
 echo "from CheckableComboBox import CheckableComboBox"
 echo "->"
