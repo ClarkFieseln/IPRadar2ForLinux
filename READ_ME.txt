@@ -22,10 +22,12 @@ Please consider this when using the tool.
 
 0) - The easiest way to use this tool is by typing:
         pip install ipradar2
-     And now you are done!
+     And now you are done! Almost...
      Just type ipradar2 in a terminal to start the program.
      Besides steps 3) and 4), you don't need to read anymore if you just want to use the tool.
      I suggest you use a separate environment.
+     Alternatively, you may want to add the installation path to PATH with:
+         export PATH=$PATH:<installation_path>
    - In case you just want to generate and use a local executable file, then check only the following points:
      3), 4), 6), 7)
    - If you are interested e.g. in debugging or modifying the code, then follow all next steps.
