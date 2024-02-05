@@ -24,7 +24,8 @@ Please consider this when using the tool.
         pip install ipradar2
      And now you are done!
      Just type ipradar2 in a terminal to start the program.
-     Besides step 3), you don't need to read anymore if you just want to use the tool.
+     Besides steps 3) and 4), you don't need to read anymore if you just want to use the tool.
+     I suggest you use a separate environment.
    - In case you just want to generate and use a local executable file, then check only the following points:
      3), 4), 6), 7)
    - If you are interested e.g. in debugging or modifying the code, then follow all next steps.
