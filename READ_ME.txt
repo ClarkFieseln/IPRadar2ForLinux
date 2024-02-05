@@ -28,6 +28,8 @@ Please consider this when using the tool.
      I suggest you use a separate environment.
      Alternatively, you may want to add the installation path to PATH with:
          export PATH=$PATH:<installation_path>
+     You can find the path under "Location:" after typing: 
+         pip show ipradar2
    - In case you just want to generate and use a local executable file, then check only the following points:
      3), 4), 6), 7)
    - If you are interested e.g. in debugging or modifying the code, then follow all next steps.
