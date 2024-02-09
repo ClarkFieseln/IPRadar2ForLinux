@@ -30,6 +30,7 @@ Please consider this when using the tool.
          export PATH=$PATH:<installation_path>
      e.g.: 
          export PATH=$PATH:/home/$USER/.local/bin
+         (you can find the installation path with: whereis ipradar2)
    - In case you just want to generate and use a local executable file, then check only the following points:
      3), 4), 6), 7)
    - If you are interested e.g. in debugging or modifying the code, then follow all next steps.
