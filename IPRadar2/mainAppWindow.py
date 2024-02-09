@@ -293,7 +293,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # config interface is same as selected
                 pass
             else:
-                index = self.comboBoxInterface.getCurrentIndex()
+                index = self.comboBoxInterface.currentIndex()
                 self.currentInterface = self.tsharkInterfacesList[index]
         else:
             # default first interface
