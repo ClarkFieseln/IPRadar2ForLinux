@@ -26,7 +26,7 @@ Please consider this when using the tool.
      Just type ipradar2 in a terminal to start the program.
      Besides steps 3) and 4), you don't need to read anymore if you just want to use the tool.
      I suggest you use a separate environment.
-     Alternatively, you may want to add the installation path to PATH with:
+     You may need to add the installation path to PATH with:
          export PATH=$PATH:<installation_path>
      e.g.: 
          export PATH=$PATH:/home/$USER/.local/bin
