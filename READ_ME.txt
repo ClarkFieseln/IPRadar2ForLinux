@@ -21,14 +21,14 @@ Please consider this when using the tool.
 **************************************************************************************************
 
 0) - The easiest way to use this tool is by typing:
-        pip install ipradar2
+         pip install ipradar2
      Without administrative privileges you need now to add the installation path to PATH with:
          export PATH=$PATH:<installation_path>
      e.g.: 
          export PATH=$PATH:/home/$USER/.local/bin
          (you can find the installation path with: whereis ipradar2)
      Alternatively, you may run the pip command with sudo:
-        sudo pip install ipradar2
+         sudo pip install ipradar2
      In this case the installation is done in the normal site-packages directory (systemwide).
      Then, just type ipradar2 in a terminal to start the program.
      Besides steps 3) and 4), you don't need to read anymore if you just want to use the tool.
