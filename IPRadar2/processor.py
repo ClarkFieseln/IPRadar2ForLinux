@@ -108,9 +108,9 @@ class ProcessorClass(object):
     netmask = "24"
     net = ""
     locationsResolved = []
-    hostsPinged = []
     hostsResolved = {}
     hostsResolutionRequested = []
+    hostsPingRequested = []
     connected_ip_list = []
     pingAuto = True
     pingResolverObject = pingResolver.PingResolverClass()
@@ -894,10 +894,6 @@ class ProcessorClass(object):
         if pinged_host_list:
             # loop list of already resolved hosts
             for ipAddress in pinged_host_list:
-                if ipAddress not in self.hostsPinged:
-                    # add to dict of pinged hosts
-                    self.hostsPinged.append(ipAddress)
-                    logging.info("pinged IP = " + ipAddress)
                 # check because if it is a "random" IP it will not yet be in node_dict
                 if ipAddress in self.node_dict:
                     self.node_dict[ipAddress].ping = True
@@ -1342,10 +1338,14 @@ class ProcessorClass(object):
             # auto ping?
             if self.pingAuto:
                 # we always ping new host as a source:
-                if (source not in self.hostsPinged) and (source != self.local) and (src_special_ip == False):
+                if (source not in self.hostsPingRequested) and (source != self.local) and (src_special_ip == False):
+                    self.hostsPingRequested.append(source)
+                    logging.info("ping source IP = " + source)
                     self.pingResolverObject.putHostToPing(source)
                 # we always ping new host as a destination:
-                if (destination not in self.hostsPinged) and (destination != self.local) and (dst_special_ip == False):
+                if (destination not in self.hostsPingRequested) and (destination != self.local) and (dst_special_ip == False):
+                    self.hostsPingRequested.append(destination)
+                    logging.info("ping destination IP = " + destination)
                     self.pingResolverObject.putHostToPing(destination)
             # request/initiate host resolution (will be done delayed in a separate thread in background)
             if src_is_local == False:
