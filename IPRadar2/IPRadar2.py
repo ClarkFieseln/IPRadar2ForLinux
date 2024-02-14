@@ -16,9 +16,9 @@ from PyQt5.QtGui import QFont
 import sys
 import logging
 if "IPRadar2" in str(sys.argv):
-    from ui.mainAppWindow import MyMainWindow
+    from mainAppWindow import MyMainWindow
 else:
-    from IPRadar2.ui.mainAppWindow import MyMainWindow
+    from IPRadar2.mainAppWindow import MyMainWindow
 
 
 
