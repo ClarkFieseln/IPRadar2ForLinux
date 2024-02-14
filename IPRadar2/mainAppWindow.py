@@ -1,4 +1,7 @@
+import gc
 import sys
+import time
+
 if "IPRadar2" in str(sys.argv):
     import configuration
     import helper_functions as hf
@@ -53,6 +56,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             currentTime = strftime("%Y.%m.%d %H:%M:%S", gmtime())
             self.setWindowTitle("IPRadar2 - capture finished on " + currentTime)
             logging.info("Bye!")
+        self.sniffer.processorObject.close()
+        while(self.sniffer.processorObject.close_app == False):
+            time.sleep(0.1)
         # WORKAROUND: until we release resources properly...not nice, but it works
         if "IPRadar2" not in str(sys.argv):
             p1 = subprocess.Popen(shlex.split("pkill -SIGKILL ipradar2"))
@@ -89,13 +95,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if self.lblStatus is not None:
             # set alternating color
             if self.statusCnt % 2:
-                self.lblStatus.setStyleSheet(
-                    'QLabel {background-color: ' + "lightgreen" + '; border: 1px solid black}')
+                self.lblStatus.setStyleSheet("".join(['QLabel {background-color: ' , "lightgreen" , '; border: 1px solid black}']))
             else:
-                self.lblStatus.setStyleSheet(
-                    'QLabel {background-color: ' + "lightgray" + '; border: 1px solid black}')
+                self.lblStatus.setStyleSheet("".join(['QLabel {background-color: ' , "lightgray" , '; border: 1px solid black}']))
             # set alternating symbol
-            self.lblStatus.setText(" " + self.status[self.statusCnt])
+            self.lblStatus.setText("".join([" " , self.status[self.statusCnt]]))
             self.statusCnt = (self.statusCnt + 1) % 4
 
         # update counters
@@ -224,7 +228,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         listOfQuestions = self.sniffer.getListOfFirewallQuestions()
         if listOfQuestions:
             for question in listOfQuestions:
-                if hf.show_popup_question("Add rule to block bad IP?\n" + question.infos) == QMessageBox.Yes:
+                if hf.show_popup_question("".join(["Add rule to block bad IP?\n" , question.infos])) == QMessageBox.Yes:
                     self.sniffer.addDenyFirewallRule(question.ip)
 
         # killed nodes
@@ -270,18 +274,18 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.setFixedSize(self.size())
         currentTime = strftime("%Y.%m.%d - %H:%M:%S", gmtime())
         userStr = "user: " + pwd.getpwuid(os.getuid()).pw_name
-        self.setWindowTitle("IPRadar2  (" + currentTime + ")  " + userStr)
+        self.setWindowTitle("".join(["IPRadar2  (" , currentTime , ")  " , userStr]))
         # fill combo-box with tshark interfaces
         self.currentInterface = configuration.INTERFACE
         self.tsharkInterfaces = self.sniffer.getInterfaces()
         interfaceNr = 1
         for interface in self.tsharkInterfaces:
-            self.comboBoxInterface.addItem(str(interfaceNr) + ". " + " " + interface)
+            self.comboBoxInterface.addItem("".join([str(interfaceNr) , ". " , " " , interface]))
             self.tsharkInterfacesList.append(interface)
             # is config IF? then set
             if self.currentInterface in interface:
                 self.comboBoxInterface.setCurrentIndex(interfaceNr)
-                self.comboBoxInterface.setCurrentText(str(interfaceNr) + ". " +  " " + interface)
+                self.comboBoxInterface.setCurrentText("".join([str(interfaceNr) , ". " , " " , interface]))
             interfaceNr = interfaceNr + 1
 
         # select default interface
@@ -367,7 +371,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.statusHostsFailedOld.setText(str(self.sniffer.getHostsFailedPast()))
         self.statusHostsResolvedOld.setText(str(self.sniffer.getHostsResolvedPast()))
         self.ptSelectedIP.textCursor().setKeepPositionOnInsert(True)
-        self.cbPingRandom.setText(str(configuration.NR_OF_RANDOM_IPS_TO_PING) + " random IPs")
+        self.cbPingRandom.setText("".join([str(configuration.NR_OF_RANDOM_IPS_TO_PING) , " random IPs"]))
         self.cbBlockBadInFirewall.setChecked(configuration.ADD_FIREWALL_RULE_BLOCK_BAD_IP)
         # if not root we disable option to add firewall rules
         if os.geteuid() != 0:
@@ -388,12 +392,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self._thread.start()
 
     def createReportFile(self):
-        reportFileString = './IPRadar2/Output/report_' + configuration.START_TIME + '.csv'
+        reportFileString = "".join(['./IPRadar2/Output/report_' , configuration.START_TIME , '.csv'])
         reportFile = None
         try:
             reportFile = open(reportFileString, "w", encoding="utf-8")
             for itemIndex in range(self.listWidgetNodes.count()):
-                reportFile.write(self.listWidgetNodes.item(itemIndex).text() + "\n")
+                reportFile.write("".join([self.listWidgetNodes.item(itemIndex).text() , "\n"]))
             reportFile.write("\n")
             reportFile.close()
             logging.debug("Created Report File.")
@@ -516,7 +520,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         selectedIF = self.comboBoxInterface.currentIndex()
         if selectedIF != 0:
             self.currentInterface = self.tsharkInterfacesList[selectedIF]
-            logging.info("Selected capture interface = " + str(self.currentInterface))
+            logging.info("".join(["Selected capture interface = " , str(self.currentInterface)]))
 
     # change SETTINGS for killing automatically
     def killSetting(self):
@@ -588,7 +592,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def on_pbGenerateReport_clicked(self):
         currAbsPath = Path().absolute()
         currAbsPath = str(currAbsPath)
-        reportFileString = os.path.join(currAbsPath, currAbsPath + "/IPRadar2/Output/report_" + configuration.START_TIME + ".csv")
+        reportFileString = os.path.join(currAbsPath, "".join([currAbsPath , "/IPRadar2/Output/report_" , configuration.START_TIME , ".csv"]))
         if os.path.isfile(reportFileString):
             self.createReportFile()
             subprocess.call(["open", reportFileString])
@@ -744,7 +748,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         logging.info(self.comboShowHost.currentData())
         s = set(self.comboShowHost.currentData())
         diff = [x for x in self.listOfHosts if x not in s]
-        logging.info("List of NOT found hosts = " + str(diff))
+        logging.info("".join(["List of NOT found hosts = " , str(diff)]))
         # update nodes
         self.sniffer.updateShowNotShowOwners(self.comboShowHost.currentData(), diff)
         self.comboShowHost.updateText()
@@ -768,7 +772,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def on_pbShowMap_clicked(self):
         # NOTE: alternative call: self.sniffer.processorObject.m.show_in_browser()
-        webbrowser.open("IPRadar2/Output/map_"+configuration.START_TIME+".html", new=2)
+        webbrowser.open("".join(["IPRadar2/Output/map_" , configuration.START_TIME , ".html"]), new=2)
 
     @pyqtSlot()
     def on_pbStartIpNetInfo_clicked(self):
@@ -785,7 +789,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     def rulesThread(self):
         # create rules.txt
-        rules_file_name = "IPRadar2/Output/rules_" + configuration.START_TIME + ".txt"
+        rules_file_name = "".join(["IPRadar2/Output/rules_" , configuration.START_TIME , ".txt"])
         command = "ufw status > " + rules_file_name
         p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         p1.communicate()
@@ -807,8 +811,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def whoisThread(self):
         if self.selected_ip != "":
             # create whois_IP.txt
-            whois_file_name = "IPRadar2/Output/whois_" + self.selected_ip + ".txt"
-            command = "whois " + self.selected_ip + " > " + whois_file_name
+            whois_file_name = "".join(["IPRadar2/Output/whois_" , self.selected_ip , ".txt"])
+            command = "".join(["whois " , self.selected_ip , " > " , whois_file_name])
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             p1.communicate()
             if p1.returncode == 0:
@@ -829,8 +833,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def netstatThread(self):
         if self.selected_ip != "":
             # create netstat_IP.txt
-            netstat_file_name = "IPRadar2/Output/netstat_" + self.selected_ip + ".txt"
-            command = "netstat -anolp 2>/dev/null | grep -v unix | grep " + self.selected_ip + " > " + netstat_file_name
+            netstat_file_name = "".join(["IPRadar2/Output/netstat_" , self.selected_ip , ".txt"])
+            command = "".join(["netstat -anolp 2>/dev/null | grep -v unix | grep " , self.selected_ip , " > " , netstat_file_name])
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             p1.communicate()
             if p1.returncode == 0:
@@ -851,8 +855,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def tracerouteThread(self):
         if self.selected_ip != "":
             # create traceroute_IP.txt
-            traceroute_file_name = "IPRadar2/Output/traceroute_" + self.selected_ip + ".txt"
-            command = "traceroute " + self.selected_ip + " > " + traceroute_file_name
+            traceroute_file_name = "".join(["IPRadar2/Output/traceroute_" , self.selected_ip , ".txt"])
+            command = "".join(["traceroute " , self.selected_ip , " > " , traceroute_file_name])
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             p1.communicate()
             if p1.returncode == 0:
@@ -867,7 +871,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     def generateIps(self):
         # create ips.txt
-        ip_file_name = "IPRadar2/Output/ips_" + configuration.START_TIME + ".txt"
+        ip_file_name = "".join(["IPRadar2/Output/ips_" , configuration.START_TIME , ".txt"])
         f = open(ip_file_name, "w", encoding="utf-8")
         if self.rbSelectedIpInfos.isChecked():
             # default value
@@ -880,18 +884,18 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 for key, value in self.item_index.items():
                     if value == index:
                         ip = key
-                f.write(ip + "\n")
+                f.write("".join([ip , "\n"]))
             else:
                 hf.show_popup_warning("No item selected, please select a host.\nNo item selected!")
                 return
         else:
             for ip in self.node_dict_gui:
-                f.write(ip + "\n")
+                f.write("".join([ip , "\n"]))
         f.close()
 
     def IpNetInfoThread(self):
         # create ips_START_TIME.txt
-        ip_file_name = "IPRadar2/Output/ips_" + configuration.START_TIME + ".txt"
+        ip_file_name = "".join(["IPRadar2/Output/ips_" , configuration.START_TIME , ".txt"])
         f = open(ip_file_name, "w", encoding="utf-8")
         if self.rbSelectedIpInfos.isChecked():
             # default value
@@ -904,13 +908,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 for key, value in self.item_index.items():
                     if value == index:
                         ip = key
-                f.write(ip + "\n")
+                f.write("".join([ip , "\n"]))
             else:
                 hf.show_popup_warning("No item selected, please select a host.\nNo item selected!")
                 return
         else:
             for ip in self.node_dict_gui:
-                f.write(ip + "\n")
+                f.write("".join([ip , "\n"]))
         f.close()
         # open ips.txt
         if os.path.isfile(ip_file_name):
