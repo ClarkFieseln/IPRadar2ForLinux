@@ -1,4 +1,17 @@
 ###########################
+# add an "interface" between the .html map and IPRadar2
+# in order to have a smooth update of infos on the browser
+# e.g. INTERACTIVE MAP (as we did in old IPRadar):
+# * select line and show infos (RX, TX bytes, timestampt)... Labels on the map
+# * select host on GUI after selection on maps
+# * set/unset BAD directly on browser or in the list (manually)
+# * etc.
+# Take a look here:
+#     https://github.com/python-visualization/folium/issues/906
+#     https://discuss.streamlit.io/t/streamlit-folium-update-more-dynamic-maps/35149
+###########################
+
+###########################
 # adapt code to fulfill PEP 8 with 120 characters width
 #     autopep8 --in-place --recursive [path/to/directory]
 #     or
@@ -11,7 +24,7 @@
 ###########################
 
 ###########################
-# correct BUG: sometimes connections are not shown
+# correct BUG: sometimes connections or nodes are not shown on the map
 ###########################
 
 ###########################
@@ -37,9 +50,12 @@
 ###########################
 
 ###########################
-# peaks of CPU usage sometimes (?): after some time of a CPU-usage-peak it then goes back to almost zero,
+# peaks of MEMORY usage sometimes:
+# e.g. when zomming in and out on a "live" map file!
+#      workaround for this case: copy .html file and open it separately
 # is memory then "garbage-collected"?
 # find out if we need to manually call gc and exactly when, or use another solution
+# e.g. avoid using big lists or dicts
 ###########################
 
 ###########################
@@ -84,19 +100,13 @@
 ###########################
 
 ###########################
-# add an "interface" between the .html map and IPRadar2
-# in order to have a smooth update of infos on the browser
-# e.g. INTERACTIVE MAP (as we did in old IPRadar):
-# * select line and show infos (RX, TX bytes, timestampt)... Labels on the map
-# * select host on GUI after selection on maps
-# * set/unset BAD directly on browser or in the list (manually)
-# * need files requirements.txt and configuration.py in folder dist_exec/IPRadar2 ?
-#   or pyvenv.cfg on top folder?
-# * etc.
+# search in IPs - or SORT - use Table
 ###########################
 
 ###########################
-# search in IPs - or SORT - use Table
+# use "".join([..]) instead of string concatenation with "+"
+# check e.g. logging.debug(), logging.error()
+# search for "+ str, + ", "+,..."
 ###########################
 
 #########################################
