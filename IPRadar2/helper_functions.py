@@ -49,11 +49,11 @@ def show_popup_question(text):
     return msg.exec_()
 
 def save_obj(obj, name):
-    with open('obj/'+ name + '.pkl', 'wb') as f:
+    with open("".join(['obj/' , name , '.pkl']), 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 def load_obj(name):
-    with open('obj/' + name + '.pkl', 'rb') as f:
+    with open("".join(['obj/' , name , '.pkl']), 'rb') as f:
         return pickle.load(f)
 
 # find 2nd occurrence of char/string within a string
@@ -65,9 +65,9 @@ def log_info_layer(packet):
    try:
       if packet.ip:
          if configuration.PACKED_OUTPUT == False:
-            info = "{0:5}".format(packet.highest_layer) + ": {0:16}".format(packet.ip.src) + "-> {0:16}".format(packet.ip.dst)
+             info = "".join(["{0:5}".format(packet.highest_layer) , ": {0:16}".format(packet.ip.src) , "-> {0:16}".format(packet.ip.dst)])
          else:
-            info = packet.highest_layer + ": " + packet.ip.src + " -> " + packet.ip.dst
+             info = "".join([packet.highest_layer , ": " , packet.ip.src , " -> " , packet.ip.dst])
          logging.info(info)
    except AttributeError:
       logging.exception("AttributeError")
@@ -85,11 +85,11 @@ def log_geolocations(response_src, response_dst, host_src_arg, host_dst_arg):
       host_dst_arg = str(host_dst_arg)
       # log locations
       if configuration.PACKED_OUTPUT == False:
-         log_location = "(" + response_src.country + ", {0:32}".format(response_src.city) + ", {0:38}".format(host_src_arg) + " -> " + \
-                  response_dst.country + ", {0:32}".format(response_dst.city) + ", {0:38}".format(host_dst_arg) + ")"
+          log_location = "".join(["(" , response_src.country , ", {0:32}".format(response_src.city) , ", {0:38}".format(host_src_arg) , " -> " , \
+                  response_dst.country , ", {0:32}".format(response_dst.city) , ", {0:38}".format(host_dst_arg) , ")"])
       else:
-         log_location = " (" + response_src.country + "," + response_src.city + "," + host_src_arg + " -> " + \
-                  response_dst.country + "," + response_dst.city + "," + host_dst_arg + ")"
+          log_location = "".join(["(" , response_src.country , "," , response_src.city , "," , host_src_arg , " -> " , \
+                   response_dst.country , "," , response_dst.city , "," , host_dst_arg , ")"])
       logging.info(log_location)
    except AttributeError:
       logging.exception("AttributeError")
