@@ -18,7 +18,7 @@ import asyncio
 
 
 
-class pysharkSnifferClass:   
+class pysharkSnifferClass:
     threadForSniffing = 0 
     threadForPacketProcessing = 1
     capture = 0
@@ -50,8 +50,8 @@ class pysharkSnifferClass:
         currAbsPath = Path().absolute()
         currAbsPath = str(currAbsPath)
         currAbsPath = currAbsPath.replace("\\", "/")
-        logging.info("Current directory: " + currAbsPath)
-        cmdListInterfaces = configuration.CAPTURE_TOOL + " -D"
+        logging.info("".join(["Current directory: " , currAbsPath]))
+        cmdListInterfaces = "".join([configuration.CAPTURE_TOOL , " -D"])
         logging.info("Capture interfaces:")
         p1 = subprocess.Popen(cmdListInterfaces, shell=True, stdout=subprocess.PIPE)
         out, err = p1.communicate()
@@ -320,8 +320,8 @@ class pysharkSnifferClass:
         if self.fname == "":
             # live capture
             ##############
-            logging.info("opening interface " + str(self.interface))
-            outputfile = './IPRadar2/Output/log_'+configuration.START_TIME+'.pcapng'
+            logging.info("".join(["opening interface " , str(self.interface)]))
+            outputfile = "".join(['./IPRadar2/Output/log_' , configuration.START_TIME , '.pcapng'])
             loop = asyncio.new_event_loop()
             # NOTE: asyncio.set_event_loop(loop) isn't necessary, it is done later in pyshark
             #
