@@ -1,4 +1,6 @@
+import gc
 import sys
+
 if "IPRadar2" in str(sys.argv):
     import configuration
     from helper_functions import find_2nd, log_info_layer, log_geolocations, playsound_block_false, Question
@@ -38,6 +40,7 @@ import struct
 import os
 from getmac import get_mac_address
 import time
+from memory_profiler import profile  # and use @profile in functions that may introduce memory leaks
 
 
 
@@ -64,11 +67,14 @@ def intermediatePoints(start, end, min_length_km=1000, segment_length_km=500):
             s = min(segment_length_m * i, inv_line.s13)
             g = inv_line.Position(s, Geodesic.STANDARD | Geodesic.LONG_UNROLL)
             yield g["lat2"], g["lon2"]
+
+
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
     a, b = tee(iterable)
     next(b, None)
     return zip(a, b)
+
 
 # A geodesic version of a PolyLine inserting intermediate points when needed.
 # This will calculate intermediate points with some segment length whenever
@@ -83,21 +89,22 @@ class GeodesicPolyLine(folium.PolyLine):
         else:
             super().__init__(locations, **kwargs)
 
+
 class ProcessorClass(object):
     # TODO: check workaround using sanitized_ip[]
     sanitized_ip = []
     selected_ip = ""
     # variable used by pingRandom() and PingRandom2()
     randomIPList = []
-    packetQueueA = 0 # will be a reference to pysharkSniffer's variable
-    packetQueueB = 0 # will be a reference to pysharkSniffer's variable
-    currentCallbackQueueIsA = [True] # will be a reference to pysharkSniffer's variable
-    locationsRead = [False] # will be a reference to pysharkSniffer's variable
+    packetQueueA = 0  # will be a reference to pysharkSniffer's variable
+    packetQueueB = 0  # will be a reference to pysharkSniffer's variable
+    currentCallbackQueueIsA = [True]  # will be a reference to pysharkSniffer's variable
+    locationsRead = [False]  # will be a reference to pysharkSniffer's variable
     processedPacketsCount = 0
     node_dict = {}
     location_dict = {}
-    node_dict_gui = {} # current dict of new/modified nodes to be shown/updated in GUI
-    __mutex = Lock() # for processing or accessing node_dict_gui[]
+    node_dict_gui = {}  # current dict of new/modified nodes to be shown/updated in GUI
+    __mutex = Lock()  # for processing or accessing node_dict_gui[]
     __mutex_question = Lock()
     __questionListComplete = []  # TODO: use dict instead?
     local = "local IP address"
@@ -126,7 +133,6 @@ class ProcessorClass(object):
     rx_kilo_bytes = 0.0
     tx_kilo_bytes_alarm = 0.0
     currentNodeNumber = 0
-    m = None # folium map
     mac_device = ""
     mac_router = ""
     close_app = False
@@ -205,7 +211,7 @@ class ProcessorClass(object):
             self.badConnectionKillerObject.killAllNow()
 
     # command to kill active connection to specified IP right now (only once)
-    def killIP(self,  ip):
+    def killIP(self, ip):
         if self.badConnectionKillerObject != None:
             self.badConnectionKillerObject.killIP(ip)
 
@@ -223,7 +229,7 @@ class ProcessorClass(object):
             for key, value in self.node_dict.items():
                 value.ping = False
                 # add/modify updated IP to GUI-List
-                self.node_dict_gui[key] =  value
+                self.node_dict_gui[key] = value
                 # send request
                 self.pingResolverObject.putHostToPing(key)
             self.__mutex.release()
@@ -237,8 +243,9 @@ class ProcessorClass(object):
             self.randomIPList = []
             byte_message = bytes("Hi!", "utf-8")
             # generate NR_OF_RANDOM_IPS_TO_PING random IPs to ping by sending UPD-packets
-            for count in range (1, configuration.NR_OF_RANDOM_IPS_TO_PING):
-                randomIP = str(randint(0, 255))+ "."+str(randint(0, 255))+ "."+str(randint(0, 255))+ "."+str(randint(0, 255))
+            for count in range(1, configuration.NR_OF_RANDOM_IPS_TO_PING):
+                randomIP = "".join([str(randint(0, 255)), ".", str(randint(0, 255)), ".", str(randint(0, 255)), ".",
+                                    str(randint(0, 255))])
                 # append to list, we may need it later to send pings
                 self.randomIPList.append(randomIP)
                 # send UDP packet
@@ -246,7 +253,7 @@ class ProcessorClass(object):
                     opened_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     # NOTE: port 5005 is RTP (Real-time Transport Protocol - RFC 3551, RFC 4571)
                     opened_socket.sendto(byte_message, (randomIP, 5005))
-                    logging.info("UDP packet sent to random IP = " + randomIP)
+                    logging.info("".join(["UDP packet sent to random IP = ", randomIP]))
                 except Exception as e:
                     self.randomIPList.remove(randomIP)
                     logging.exception("Exception: processor.pingRandom(): Exception = " + str(e))
@@ -257,7 +264,7 @@ class ProcessorClass(object):
             time.sleep(10)
             # no ping really:
             self.pingRandom2()
-            
+
     #################
     def pingRandom2(self):
         # if pingAuto == True, then all previous UDP packets will produce also a ping to the corresponding IPs
@@ -271,17 +278,17 @@ class ProcessorClass(object):
                     if key in self.node_dict:
                         self.node_dict[key].ping = False
                         # add/modify updated IP to GUI-List
-                        self.node_dict_gui[key] =  self.node_dict[key]
+                        self.node_dict_gui[key] = self.node_dict[key]
                         # send request
                         self.pingResolverObject.putHostToPing(key)
-                        logging.info("Ping to random IP = " + key)
+                        logging.info("".join(["Ping to random IP = ", key]))
                     else:
-                        logging.info("Cause not yet in node_dict, do NOT ping to random IP = " + key)
+                        logging.info("".join(["Cause not yet in node_dict, do NOT ping to random IP = ", key]))
                 self.__mutex.release()
                 self.needUpdate = True
 
     # ping a specific host (only known hosts allowed)
-    def pingIP(self,  host):
+    def pingIP(self, host):
         if self.pingResolverObject != None:
             if (host.find(".") == -1) or (host not in self.node_dict):
                 ip = socket.gethostbyname(host)
@@ -292,7 +299,7 @@ class ProcessorClass(object):
                 self.node_dict[ip].ping = False
                 # add/modify updated IP to GUI-List
                 self.__mutex.acquire()
-                self.node_dict_gui[ip] =  self.node_dict[ip]
+                self.node_dict_gui[ip] = self.node_dict[ip]
                 self.__mutex.release()
                 # send request
                 self.pingResolverObject.putHostToPing(ip)
@@ -321,7 +328,7 @@ class ProcessorClass(object):
 
     # TODO: improvement
     # avoid all these loops by handling dicts objects instead - in mainAppWindow.py directly is better.
-    def updateShowNotShowOwners(self,  listOwnersToShow,  listOwnersToHide):
+    def updateShowNotShowOwners(self, listOwnersToShow, listOwnersToHide):
         # owners to show:
         for show in listOwnersToShow:
             for ip in self.node_dict:
@@ -330,7 +337,7 @@ class ProcessorClass(object):
                         self.node_dict[ip].show_host = True
                         # add/modify updated IP to GUI-List
                         self.__mutex.acquire()
-                        self.node_dict_gui[ip] =  self.node_dict[ip]
+                        self.node_dict_gui[ip] = self.node_dict[ip]
                         self.__mutex.release()
             self.needUpdate = True
         # owners to hide:
@@ -341,7 +348,7 @@ class ProcessorClass(object):
                         self.node_dict[ip].show_host = False
                         # add/modify updated IP to GUI-List
                         self.__mutex.acquire()
-                        self.node_dict_gui[ip] =  self.node_dict[ip]
+                        self.node_dict_gui[ip] = self.node_dict[ip]
                         self.__mutex.release()
             self.needUpdate = True
 
@@ -365,11 +372,12 @@ class ProcessorClass(object):
         if configuration.INTERFACE != "":
             try:
                 self.netmask = socket.inet_ntoa(fcntl.ioctl(socket.socket(socket.AF_INET, socket.SOCK_DGRAM),
-                                            35099, struct.pack('256s', configuration.INTERFACE.encode('utf-8')))[20:24])
+                                                            35099, struct.pack('256s', configuration.INTERFACE.encode(
+                        'utf-8')))[20:24])
             except Exception as e:
                 logging.exception("Exception: " + str(e))
             self.local = self.get_local_ip()
-            self.net = ipaddress.IPv4Network(self.local + "/" + self.netmask, False)
+            self.net = ipaddress.IPv4Network("".join([self.local, "/", self.netmask]), False)
 
     def close(self):
         self.close_app = True
@@ -378,26 +386,30 @@ class ProcessorClass(object):
     def start(self):
         logging.info("processor.start(): start threads")
         # create ping processor
-        # first create ping processing thread 
-        self.threadForPingProcessing = threading.Thread(name="pingProcessingThread", target=self.pingResolverObject.processingThread)
+        # first create ping processing thread
+        self.threadForPingProcessing = threading.Thread(name="pingProcessingThread",
+                                                        target=self.pingResolverObject.processingThread)
         self.threadForPingProcessing.start()
         # create host processor and bad connection killer threads
         # first create host processing thread (threadForPacketProcessing needs it)
-        self.threadForHostProcessing = threading.Thread(name="hostProcessingThread", target=self.hostResolverObject.processingThread)
+        self.threadForHostProcessing = threading.Thread(name="hostProcessingThread",
+                                                        target=self.hostResolverObject.processingThread)
         self.threadForHostProcessing.start()
         # then create bad connection killer thread (threadForPacketProcessing needs it)
-        self.threadForBadConnectionKilling = threading.Thread(name="badConnectionKillerThread", target=self.badConnectionKillerObject.processingThread)
+        self.threadForBadConnectionKilling = threading.Thread(name="badConnectionKillerThread",
+                                                              target=self.badConnectionKillerObject.processingThread)
         self.threadForBadConnectionKilling.start()
         # then create firewall management thread (threadForFirewallManagement needs it)
-        self.threadForFirewallManagement = threading.Thread(name="firewallManagementThread", target=self.firewallManagerObject.processingThread)
+        self.threadForFirewallManagement = threading.Thread(name="firewallManagementThread",
+                                                            target=self.firewallManagerObject.processingThread)
         self.threadForFirewallManagement.start()
 
     # initialize known locations from file,
     # initialize known hosts from file,
     # resolve local and public hosts
-    def __init__(self): # (self):
+    def __init__(self):  # (self):
         # initialize list with known locations from file
-        locationsFile = open("IPRadar2/Config/locationsResolved.json",  "r", encoding="utf-8")
+        locationsFile = open("IPRadar2/Config/locationsResolved.json", "r", encoding="utf-8")
         # list of geolocations, each in json format (same in .json file)
         self.locationsResolved = list(locationsFile)
         locationsFile.close()
@@ -406,14 +418,14 @@ class ProcessorClass(object):
         for location in self.locationsResolved:
             if location != "":
                 self.locationsResolved[i] = json.loads(location)
-                i = i +1
+                i = i + 1
         # MAC address of device
         self.mac_device = get_mac_address()
         logging.info(self.mac_device)
         # MAC address of router
         try:
             self.mac_router = get_mac_address(ip=configuration.ROUTER_IP)
-            logging.info("MAC of router = " + self.mac_router)
+            logging.info("".join(["MAC of router = ", self.mac_router]))
         except Exception as e:
             logging.exception("Trying to obtain MAC address for router with IP " + configuration.ROUTER_IP)
             logging.exception("Exception: " + str(e))
@@ -423,27 +435,29 @@ class ProcessorClass(object):
         if configuration.INTERFACE != "":
             try:
                 self.netmask = socket.inet_ntoa(fcntl.ioctl(socket.socket(socket.AF_INET, socket.SOCK_DGRAM),
-                            35099, struct.pack('256s', configuration.INTERFACE.encode('utf-8')))[20:24])
+                                                            35099, struct.pack('256s', configuration.INTERFACE.encode(
+                        'utf-8')))[20:24])
             except Exception as e:
                 logging.exception("Exception: " + str(e))
-            self.net = ipaddress.IPv4Network(self.local + "/" + self.netmask, False)
+            self.net = ipaddress.IPv4Network("".join([self.local, "/", self.netmask]), False)
         else:
             self.netmask = "24"
-            self.net = ipaddress.IPv4Network(self.local + "/" + self.netmask, False)
+            self.net = ipaddress.IPv4Network("".join([self.local, "/", self.netmask]), False)
         self.badConnectionKillerObject.setLocalIP(self.local)
-        logging.info("Local IP address = " + str(self.local))
+        logging.info("".join(["Local IP address = ", str(self.local)]))
         netlocalendpos = find_2nd(self.local, ".")
-        self.netlocal = self.local[:netlocalendpos+1]
+        self.netlocal = self.local[:netlocalendpos + 1]
         if configuration.PUBLIC_IP == "":
             self.public = ""
             try:
                 self.public = requests.get('https://ident.me').text
             except Exception as e:
                 self.public = ""
-                logging.exception("processor.__init__(): Exception when calling requests.get('https://ident.me'): " + str(e))
+                logging.exception(
+                    "processor.__init__(): Exception when calling requests.get('https://ident.me'): " + str(e))
         else:
             self.public = configuration.PUBLIC_IP
-        logging.info("Public IP address = " + self.public)
+        logging.info("".join(["Public IP address = ", self.public]))
         if self.public != "":
             try:
                 self.publicHost = socket.gethostbyaddr(self.public)
@@ -451,16 +465,16 @@ class ProcessorClass(object):
             except Exception as e:
                 self.publicHost = "(not found)"
                 logging.exception("processor.__init__(): Exception when calling gethostbyaddr(): " + str(e))
-            logging.info("Host name of Local IP address = " + self.localHost)
-            logging.info("Host name of Public IP address = " + self.publicHost)
+            logging.info("".join(["Host name of Local IP address = ", self.localHost]))
+            logging.info("".join(["Host name of Public IP address = ", self.publicHost]))
             # Note: we don't get location with DbIpCity.get() because we may appear e.g. in "another" city near us.
             #       Instead, we use configuration, which shall be more accurate:
             self.response_public = DbIpCityResponse(
-                                    configuration.MY_CITY, configuration.MY_COUNTRY, configuration.MY_IP_ADDRESS, configuration.MY_LATITUDE,
-                                    configuration.MY_LONGITUDE, configuration.MY_REGION)
+                configuration.MY_CITY, configuration.MY_COUNTRY, configuration.MY_IP_ADDRESS, configuration.MY_LATITUDE,
+                configuration.MY_LONGITUDE, configuration.MY_REGION)
             # overwrite IP, even if it is actually somewhere else
-            self.response_public.ip_address =  self.public
-            logging.info("Location:\n" + str(self.response_public))
+            self.response_public.ip_address = self.public
+            logging.info("".join(["Location:\n", str(self.response_public)]))
 
     # plot the map
     # Each time plotMap() is called we create NEW structures (latitude_local[]..) to draw.
@@ -493,66 +507,71 @@ class ProcessorClass(object):
         SHOW_CONNECTIONS_ACTIVE = configuration.SHOW_CONNECTIONS_ACTIVE
 
         # create map object
-        m = folium.Map(location=[configuration.MAP_CENTER_LAT, configuration.MAP_CENTER_LON], zoom_start=configuration.MAP_ZOOM, tiles=None)
+        m = folium.Map(location=[configuration.MAP_CENTER_LAT, configuration.MAP_CENTER_LON],
+                       zoom_start=configuration.MAP_ZOOM, tiles=None)
 
         # add tile layers
         if configuration.CURRENT_MAP_TILE != "OpenTopoMap":
             tile_layer = folium.TileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-                             name='OpenTopoMap',
-                             attr='OpenTopoMap').add_to(m)
+                                          name='OpenTopoMap',
+                                          attr='OpenTopoMap').add_to(m)
         if configuration.CURRENT_MAP_TILE != "OpenStreetMap":
             tile_layer = folium.TileLayer('openstreetmap',
-                             attr='OpenStreetMap').add_to(m)
+                                          attr='OpenStreetMap').add_to(m)
         if configuration.CURRENT_MAP_TILE != "CartoDB_Voyager":
             tile_layer = folium.TileLayer('CartoDB Voyager',
-                             attr='CartoDB Voyager').add_to(m)
+                                          attr='CartoDB Voyager').add_to(m)
         if configuration.CURRENT_MAP_TILE != "CartoDB_Positron":
             tile_layer = folium.TileLayer('CartoDB Positron',
-                             attr='CartoDB Positron').add_to(m)
+                                          attr='CartoDB Positron').add_to(m)
         if configuration.CURRENT_MAP_TILE != "cartodbdark_matter" or configuration.CURRENT_MAP_TILE == "":
             tile_layer = folium.TileLayer('cartodbdark_matter',
-                             attr='cartodbdark_matter').add_to(m)
+                                          attr='cartodbdark_matter').add_to(m)
 
         # add default tile layer
         if configuration.CURRENT_MAP_TILE == "OpenTopoMap":
             tile_layer = folium.TileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-                             name='OpenTopoMap',
-                             attr='OpenTopoMap') # .add_to(m)
+                                          name='OpenTopoMap',
+                                          attr='OpenTopoMap')  # .add_to(m)
         elif configuration.CURRENT_MAP_TILE == "OpenStreetMap":
             tile_layer = folium.TileLayer('openstreetmap',
-                             attr='OpenStreetMap') # .add_to(m)
+                                          attr='OpenStreetMap')  # .add_to(m)
         elif configuration.CURRENT_MAP_TILE == "CartoDB_Voyager":
             tile_layer = folium.TileLayer('CartoDB Voyager',
-                             attr='CartoDB Voyager') # .add_to(m)
+                                          attr='CartoDB Voyager')  # .add_to(m)
         elif configuration.CURRENT_MAP_TILE == "CartoDB_Positron":
             tile_layer = folium.TileLayer('CartoDB Positron',
-                             attr='CartoDB Positron') # .add_to(m)
+                                          attr='CartoDB Positron')  # .add_to(m)
         elif configuration.CURRENT_MAP_TILE == "cartodbdark_matter" or configuration.CURRENT_MAP_TILE == "":
             tile_layer = folium.TileLayer('cartodbdark_matter',
-                             attr='cartodbdark_matter') # .add_to(m)
+                                          attr='cartodbdark_matter')  # .add_to(m)
         tile_layer.add_to(m)
 
         # add layer control
         folium.LayerControl().add_to(m)
-        
+
         # Rings (distance rings)
         # TODO: new feature: to make it look more like a radar
-        
+
         # for better visibility, same geolocations are spread in a CIRCLE
         for srcNode in self.node_dict.values():
             # show srcNode with that owner ?
             if srcNode.show_host == True:
                 if srcNode.bad:
-                    latitude_bad_local = [] 
+                    latitude_bad_local = []
                     longitude_bad_local = []
                     # add all connections to communication partners as RED lines
                     for dstNode in srcNode.comm_partner_list:
                         # show dstNode with that owner ?
                         if self.node_dict[dstNode].show_host == True:
-                            activeConnection = (srcNode.conn_established==True) or (self.node_dict[dstNode].conn_established==True)
-                            killedConnection = dstNode in srcNode.comm_partner_list_killed or srcNode.ip in self.node_dict[dstNode].comm_partner_list_killed
+                            activeConnection = (srcNode.conn_established == True) or (
+                                        self.node_dict[dstNode].conn_established == True)
+                            killedConnection = dstNode in srcNode.comm_partner_list_killed or srcNode.ip in \
+                                               self.node_dict[dstNode].comm_partner_list_killed
                             # plot RED line
-                            if (SHOW_CONNECTIONS and (SHOW_CONNECTION_BAD or (killedConnection and SHOW_CONNECTION_KILLED) or (activeConnection and SHOW_CONNECTIONS_ACTIVE))):
+                            if (SHOW_CONNECTIONS and (
+                                    SHOW_CONNECTION_BAD or (killedConnection and SHOW_CONNECTION_KILLED) or (
+                                    activeConnection and SHOW_CONNECTIONS_ACTIVE))):
                                 latitude_bad_local.append(srcNode.lat_plot)
                                 longitude_bad_local.append(srcNode.lon_plot)
                                 latitude_bad_local.append(self.node_dict[dstNode].lat_plot)
@@ -572,13 +591,16 @@ class ProcessorClass(object):
                                     line_weight = 4.0
                                 else:
                                     line_weight = 2.0
-                                tooltip_text = str(srcNode.ip) + " -> " + str(dstNode)
-                                GeodesicPolyLine([[latitude_bad_local[0], longitude_bad_local[0]],
-                                                  [latitude_bad_local[1], longitude_bad_local[1]]],
-                                                 color=connection_color, weight=line_weight,
-                                                 tooltip=tooltip_text,
-                                                 popup="<h4>" + tooltip_text + "</h4>"
-                                                 ).add_to(m)
+                                tooltip_text = "".join([str(srcNode.ip), " -> ", str(dstNode)])
+                                # TODO: need to del here? and in Markers, incl. popup, icons, etc.?
+                                g = GeodesicPolyLine([[latitude_bad_local[0], longitude_bad_local[0]],
+                                                      [latitude_bad_local[1], longitude_bad_local[1]]],
+                                                     color=connection_color, weight=line_weight,
+                                                     tooltip=tooltip_text,
+                                                     popup="".join(["<h4>", tooltip_text, "</h4>"])
+                                                     )
+                                g.add_to(m)
+                                del g
                             # needed for heatmap
                             if HEATMAP:
                                 if HEATMAP_SRC == True:
@@ -588,7 +610,9 @@ class ProcessorClass(object):
                                     latitude_bad_local_list.append(self.node_dict[dstNode].lat_plot)
                                     longitude_bad_local_list.append(self.node_dict[dstNode].lon_plot)
                     # add marker RED of source
-                    if (SHOW_NODES or SHOW_LABELS) and (SHOW_HOST_BAD or (SHOW_HOST_ACTIVE and srcNode.conn_established==True) or (SHOW_HOST_KILLED and srcNode.killed==True) or (SHOW_HOST_PING and srcNode.ping==False)):
+                    if (SHOW_NODES or SHOW_LABELS) and (
+                            SHOW_HOST_BAD or (SHOW_HOST_ACTIVE and srcNode.conn_established == True) or (
+                            SHOW_HOST_KILLED and srcNode.killed == True) or (SHOW_HOST_PING and srcNode.ping == False)):
                         activeConnection = (srcNode.conn_established == True)
                         # killed nodes override other colors
                         if srcNode.killed:
@@ -606,7 +630,7 @@ class ProcessorClass(object):
                             icon_type = 'stop'
                         else:
                             icon_type = ''
-                        tooltip_text = srcNode.host + ", tx="+str(srcNode.tx) + ", rx="+str(srcNode.rx)
+                        tooltip_text = "".join([srcNode.host, ", tx=", str(srcNode.tx), ", rx=", str(srcNode.rx)])
                         # marker
                         if SHOW_NODES:
                             # selected?
@@ -617,38 +641,44 @@ class ProcessorClass(object):
                                                   icon_size=(45, 55),
                                                   icon_anchor=(22, 50))).add_to(m)
                             folium.Marker([srcNode.lat_plot, srcNode.lon_plot],
-                                            tooltip=tooltip_text,
-                                            popup=folium.Popup("<h4>" + tooltip_text + "</h4>", show=SHOW_POPUPS),
-                                            icon=folium.Icon(icon=icon_type, color=node_color)).add_to(m)
+                                          tooltip=tooltip_text,
+                                          popup=folium.Popup("".join(["<h4>", tooltip_text, "</h4>"]),
+                                                             show=SHOW_POPUPS),
+                                          icon=folium.Icon(icon=icon_type, color=node_color)).add_to(m)
                         # label
                         if SHOW_LABELS:
                             if srcNode.ip == self.selected_ip:
-                                label_size = str(configuration.LABEL_SIZE*2)
+                                label_size = str(configuration.LABEL_SIZE * 2)
                             else:
                                 label_size = str(configuration.LABEL_SIZE)
                             folium.Marker(location=[srcNode.lat_plot, srcNode.lon_plot],
                                           icon=DivIcon(
                                               icon_anchor=(-5, 5),
-                                              html='<div style="font-size: ' + label_size + 'pt">' + srcNode.ip + '</div>',
+                                              html="".join(['<div style="font-size: ', label_size, 'pt">', srcNode.ip,
+                                                            '</div>']),
                                           )
                                           ).add_to(m)
                 # this is a good guy?
                 else:
-                    # add connections to communication partners 
+                    # add connections to communication partners
                     # bad destinations will be added to bad path - RED lines
                     for dstNode in srcNode.comm_partner_list:
                         # show dstNode with that owner ?
                         if self.node_dict[dstNode].show_host == True:
                             latitude_local = []
                             longitude_local = []
-                            latitude_bad_local = [] 
+                            latitude_bad_local = []
                             longitude_bad_local = []
                             # destination is bad?
                             if self.node_dict[dstNode].bad:
-                                activeConnection = (srcNode.conn_established==True) or (self.node_dict[dstNode].conn_established==True)
-                                killedConnection = dstNode in srcNode.comm_partner_list_killed or srcNode.ip in self.node_dict[dstNode].comm_partner_list_killed
+                                activeConnection = (srcNode.conn_established == True) or (
+                                            self.node_dict[dstNode].conn_established == True)
+                                killedConnection = dstNode in srcNode.comm_partner_list_killed or srcNode.ip in \
+                                                   self.node_dict[dstNode].comm_partner_list_killed
                                 # plot RED line
-                                if (SHOW_CONNECTIONS and (SHOW_CONNECTION_BAD or (killedConnection and SHOW_CONNECTION_KILLED) or (activeConnection and SHOW_CONNECTIONS_ACTIVE))):
+                                if (SHOW_CONNECTIONS and (
+                                        SHOW_CONNECTION_BAD or (killedConnection and SHOW_CONNECTION_KILLED) or (
+                                        activeConnection and SHOW_CONNECTIONS_ACTIVE))):
                                     latitude_bad_local.append(srcNode.lat_plot)
                                     longitude_bad_local.append(srcNode.lon_plot)
                                     latitude_bad_local.append(self.node_dict[dstNode].lat_plot)
@@ -668,13 +698,16 @@ class ProcessorClass(object):
                                         line_weight = 4.0
                                     else:
                                         line_weight = 2.0
-                                    tooltip_text = str(srcNode.ip) + " -> " + str(dstNode)
-                                    GeodesicPolyLine([[latitude_bad_local[0], longitude_bad_local[0]],
-                                                      [latitude_bad_local[1], longitude_bad_local[1]]],
-                                                     color=connection_color, weight=line_weight,
-                                                     tooltip=tooltip_text,
-                                                     popup="<h4>" + tooltip_text + "</h4>"
-                                                     ).add_to(m)
+                                    tooltip_text = "".join([str(srcNode.ip), " -> ", str(dstNode)])
+                                    # TODO: need to del here? and in Markers, incl. popup, icons, etc.?
+                                    g = GeodesicPolyLine([[latitude_bad_local[0], longitude_bad_local[0]],
+                                                          [latitude_bad_local[1], longitude_bad_local[1]]],
+                                                         color=connection_color, weight=line_weight,
+                                                         tooltip=tooltip_text,
+                                                         popup="".join(["<h4>", tooltip_text, "</h4>"])
+                                                         )
+                                    g.add_to(m)
+                                    del g
                                 # needed for heatmap
                                 if HEATMAP:
                                     if HEATMAP_SRC == True:
@@ -685,8 +718,10 @@ class ProcessorClass(object):
                                         longitude_bad_local_list.append(self.node_dict[dstNode].lon_plot)
                             # both hosts are good?
                             else:
-                                activeConnection = (srcNode.conn_established==True) or (self.node_dict[dstNode].conn_established==True)
-                                killedConnection = dstNode in srcNode.comm_partner_list_killed or srcNode.ip in self.node_dict[dstNode].comm_partner_list_killed
+                                activeConnection = (srcNode.conn_established == True) or (
+                                            self.node_dict[dstNode].conn_established == True)
+                                killedConnection = dstNode in srcNode.comm_partner_list_killed or srcNode.ip in \
+                                                   self.node_dict[dstNode].comm_partner_list_killed
                                 # plot line
                                 if SHOW_CONNECTIONS:
                                     latitude_local.append(srcNode.lat_plot)
@@ -694,7 +729,9 @@ class ProcessorClass(object):
                                     latitude_local.append(self.node_dict[dstNode].lat_plot)
                                     longitude_local.append(self.node_dict[dstNode].lon_plot)
                                     if srcNode.host_resolved == False or self.node_dict[dstNode].host_resolved == False:
-                                        if (SHOW_CONNECTION_UNKNOWN or (killedConnection and SHOW_CONNECTION_KILLED) or (activeConnection and SHOW_CONNECTIONS_ACTIVE)):
+                                        if (SHOW_CONNECTION_UNKNOWN or (
+                                                killedConnection and SHOW_CONNECTION_KILLED) or (
+                                                activeConnection and SHOW_CONNECTIONS_ACTIVE)):
                                             # killed connections override other colors
                                             if killedConnection:
                                                 if activeConnection:
@@ -710,15 +747,19 @@ class ProcessorClass(object):
                                                 line_weight = 4.0
                                             else:
                                                 line_weight = 2.0
-                                            tooltip_text = str(srcNode.ip) + " -> " + str(dstNode)
-                                            GeodesicPolyLine([[latitude_local[0], longitude_local[0]],
-                                                              [latitude_local[1], longitude_local[1]]],
-                                                             color=connection_color, weight=line_weight,
-                                                             tooltip=tooltip_text,
-                                                             popup="<h4>" + tooltip_text + "</h4>"
-                                                             ).add_to(m)
+                                            tooltip_text = "".join([str(srcNode.ip), " -> ", str(dstNode)])
+                                            # TODO: need to del here? and in Markers, incl. popup, icons, etc.?
+                                            g = GeodesicPolyLine([[latitude_local[0], longitude_local[0]],
+                                                                  [latitude_local[1], longitude_local[1]]],
+                                                                 color=connection_color, weight=line_weight,
+                                                                 tooltip=tooltip_text,
+                                                                 popup="".join(["<h4>", tooltip_text, "</h4>"])
+                                                                 )
+                                            g.add_to(m)
+                                            del g
                                     else:
-                                        if (SHOW_CONNECTION_GOOD or (killedConnection and SHOW_CONNECTION_KILLED) or (activeConnection and SHOW_CONNECTIONS_ACTIVE)):
+                                        if (SHOW_CONNECTION_GOOD or (killedConnection and SHOW_CONNECTION_KILLED) or (
+                                                activeConnection and SHOW_CONNECTIONS_ACTIVE)):
                                             # killed connections override other colors
                                             if killedConnection:
                                                 if activeConnection:
@@ -734,18 +775,24 @@ class ProcessorClass(object):
                                                 line_weight = 4.0
                                             else:
                                                 line_weight = 2.0
-                                            tooltip_text = str(srcNode.ip) + " -> " + str(dstNode)
-                                            GeodesicPolyLine([[latitude_local[0], longitude_local[0]],
-                                                              [latitude_local[1], longitude_local[1]]],
-                                                             color=connection_color, weight=line_weight,
-                                                             tooltip=tooltip_text,
-                                                             popup="<h4>" + tooltip_text + "</h4>"
-                                                             ).add_to(m)
+                                            tooltip_text = "".join([str(srcNode.ip), " -> ", str(dstNode)])
+                                            # TODO: need to del here? and in Markers, incl. popup, icons, etc.?
+                                            g = GeodesicPolyLine([[latitude_local[0], longitude_local[0]],
+                                                                  [latitude_local[1], longitude_local[1]]],
+                                                                 color=connection_color, weight=line_weight,
+                                                                 tooltip=tooltip_text,
+                                                                 popup="".join(["<h4>", tooltip_text, "</h4>"])
+                                                                 )
+                                            g.add_to(m)
+                                            del g
 
                     activeConnection = (srcNode.conn_established == True)
                     # add marker UNKNOWN source
                     if srcNode.host_resolved == False:
-                        if (SHOW_NODES or SHOW_LABELS) and (SHOW_HOST_UNKNOWN or (SHOW_HOST_ACTIVE and srcNode.conn_established==True) or (SHOW_HOST_KILLED and srcNode.killed==True) or (SHOW_HOST_PING and srcNode.ping==False)):
+                        if (SHOW_NODES or SHOW_LABELS) and (
+                                SHOW_HOST_UNKNOWN or (SHOW_HOST_ACTIVE and srcNode.conn_established == True) or (
+                                SHOW_HOST_KILLED and srcNode.killed == True) or (
+                                        SHOW_HOST_PING and srcNode.ping == False)):
                             if "(unknown)" in srcNode.host:
                                 # killed nodes override other colors
                                 if srcNode.killed:
@@ -778,19 +825,20 @@ class ProcessorClass(object):
                                     icon_type = 'stop'
                                 else:
                                     icon_type = ''
-                            tooltip_text = srcNode.host + ", tx=" + str(srcNode.tx) + ", rx=" + str(srcNode.rx)
+                            tooltip_text = "".join([srcNode.host, ", tx=", str(srcNode.tx), ", rx=", str(srcNode.rx)])
                             # marker
                             if SHOW_NODES:
                                 # selected?
                                 if srcNode.ip == self.selected_ip:
                                     folium.Marker([srcNode.lat_plot, srcNode.lon_plot],
                                                   icon=folium.features.CustomIcon(
-                                                  icon_image="IPRadar2/Icons/marker-icon.png",
-                                                  icon_size=(45, 55),
-                                                  icon_anchor=(22, 50))).add_to(m)
+                                                      icon_image="IPRadar2/Icons/marker-icon.png",
+                                                      icon_size=(45, 55),
+                                                      icon_anchor=(22, 50))).add_to(m)
                                 folium.Marker([srcNode.lat_plot, srcNode.lon_plot],
                                               tooltip=tooltip_text,
-                                              popup=folium.Popup("<h4>" + tooltip_text + "</h4>", show=SHOW_POPUPS),
+                                              popup=folium.Popup("".join(["<h4>", tooltip_text, "</h4>"]),
+                                                                 show=SHOW_POPUPS),
                                               icon=folium.Icon(icon=icon_type, color=node_color)).add_to(m)
                             # label
                             if SHOW_LABELS:
@@ -801,12 +849,17 @@ class ProcessorClass(object):
                                 folium.Marker(location=[srcNode.lat_plot, srcNode.lon_plot],
                                               icon=DivIcon(
                                                   icon_anchor=(-5, 5),
-                                                  html='<div style="font-size: ' + label_size + 'pt">' + srcNode.ip + '</div>',
-                                                  )
+                                                  html="".join(
+                                                      ['<div style="font-size: ', label_size, 'pt">', srcNode.ip,
+                                                       '</div>']),
+                                              )
                                               ).add_to(m)
                     else:
                         # add marker GOOD source
-                        if (SHOW_NODES or SHOW_LABELS) and (SHOW_HOST_GOOD or (SHOW_HOST_ACTIVE and srcNode.conn_established==True) or (SHOW_HOST_KILLED and srcNode.killed==True) or (SHOW_HOST_PING and srcNode.ping==False)):
+                        if (SHOW_NODES or SHOW_LABELS) and (
+                                SHOW_HOST_GOOD or (SHOW_HOST_ACTIVE and srcNode.conn_established == True) or (
+                                SHOW_HOST_KILLED and srcNode.killed == True) or (
+                                        SHOW_HOST_PING and srcNode.ping == False)):
                             if activeConnection:
                                 markerColor = configuration.NODE_GOOD_COLOR_CON
                             else:
@@ -838,22 +891,23 @@ class ProcessorClass(object):
                             else:
                                 node_color = markerColor
                             if srcNode.ping:
-                                icon_type = 'stop' # 'cloud' # 'star' # 'heart' # 'flag' # 'info-sign'
+                                icon_type = 'stop'  # 'cloud' # 'star' # 'heart' # 'flag' # 'info-sign'
                             else:
                                 icon_type = ''
-                            tooltip_text = srcNode.host + ", tx=" + str(srcNode.tx) + ", rx=" + str(srcNode.rx)
+                            tooltip_text = "".join([srcNode.host, ", tx=", str(srcNode.tx), ", rx=", str(srcNode.rx)])
                             # marker
                             if SHOW_NODES:
                                 # selected?
                                 if srcNode.ip == self.selected_ip:
                                     folium.Marker([srcNode.lat_plot, srcNode.lon_plot],
                                                   icon=folium.features.CustomIcon(
-                                                  icon_image="IPRadar2/Icons/marker-icon.png",
-                                                  icon_size=(45, 55),
-                                                  icon_anchor=(22, 50))).add_to(m)
-                                folium.Marker([srcNode.lat_plot, srcNode.lon_plot], # color=node_color,
+                                                      icon_image="IPRadar2/Icons/marker-icon.png",
+                                                      icon_size=(45, 55),
+                                                      icon_anchor=(22, 50))).add_to(m)
+                                folium.Marker([srcNode.lat_plot, srcNode.lon_plot],  # color=node_color,
                                               tooltip=tooltip_text,
-                                              popup=folium.Popup("<h4>" + tooltip_text + "</h4>", show=SHOW_POPUPS),
+                                              popup=folium.Popup("".join(["<h4>", tooltip_text, "</h4>"]),
+                                                                 show=SHOW_POPUPS),
                                               icon=folium.Icon(icon=icon_type, icon_color='white', color=node_color)
                                               ).add_to(m)
                             # label
@@ -865,26 +919,33 @@ class ProcessorClass(object):
                                 folium.Marker(location=[srcNode.lat_plot, srcNode.lon_plot],
                                               icon=DivIcon(
                                                   icon_anchor=(-5, 5),
-                                                  html='<div style="font-size: ' + label_size + 'pt">' + srcNode.ip + '</div>',
-                                                  )
+                                                  html="".join(
+                                                      ['<div style="font-size: ', label_size, 'pt">', srcNode.ip,
+                                                       '</div>']),
+                                              )
                                               ).add_to(m)
 
         # marker with last update-time
         if SHOW_INFO:
-            info = strftime("%Y.%m.%d - %H:%M:%S", gmtime()) + " nr. of hosts = " + str(len(self.node_dict))
-            folium.Marker([configuration.MAP_INFO_LAT, configuration.MAP_INFO_LON], color=configuration.NODE_DEFAULT_COLOR,
+            info = "".join([strftime("%Y.%m.%d - %H:%M:%S", gmtime()), " nr. of hosts = ", str(len(self.node_dict))])
+            folium.Marker([configuration.MAP_INFO_LAT, configuration.MAP_INFO_LON],
+                          color=configuration.NODE_DEFAULT_COLOR,
                           tooltip=info,
-                          popup="<h1>" + info + "</h1>",
+                          popup="".join(["<h1>", info, "</h1>"]),
                           icon=DivIcon(
                               icon_size=(280, 36),
                               icon_anchor=(90, 0),
-                              html='<div style="font-size: 20pt">' + info + '</div>',
-                              )
+                              html="".join(['<div style="font-size: 20pt">', info, '</div>']),
+                          )
                           ).add_to(m)
 
         # draw/save map
         try:
-            m.save("IPRadar2/Output/map_"+configuration.START_TIME+".html")
+            m.save("".join(["IPRadar2/Output/map_", configuration.START_TIME, ".html"]))
+            # delete map object
+            del m
+            # force garbage collection
+            gc.collect()
         except Exception as e:
             logging.exception("plotMap()->gmap.draw() throwed exception = " + str(e))
 
@@ -899,7 +960,7 @@ class ProcessorClass(object):
                     self.node_dict[ipAddress].ping = True
                     # add/modify updated IP to GUI-List
                     self.__mutex.acquire()
-                    self.node_dict_gui[ipAddress] =  self.node_dict[ipAddress]
+                    self.node_dict_gui[ipAddress] = self.node_dict[ipAddress]
                     self.__mutex.release()
                 else:
                     logging.error("Error: ping result of host which is not yet in node_dict! IP = " + str(ipAddress))
@@ -912,7 +973,7 @@ class ProcessorClass(object):
             # loop list of already resolved hosts
             for host in resolved_host_list:
                 ipAddress = host["ip"]
-                self.node_dict[ipAddress].host = str(self.node_dict[ipAddress].pos) + ": " + host["host"]
+                self.node_dict[ipAddress].host = "".join([str(self.node_dict[ipAddress].pos), ": ", host["host"]])
                 self.node_dict[ipAddress].whosip = host["whosip"]
                 self.node_dict[ipAddress].host_resolved = True
                 if ipAddress not in self.hostsResolved:
@@ -921,48 +982,64 @@ class ProcessorClass(object):
                     if "(unknown)" not in host["host"]:
                         # add to dict of resolved hosts
                         self.hostsResolved[ipAddress] = host["host"]
-                        logging.info("resolved host = " + host["host"] + " for IP = " + host["ip"] + " in position " + str(self.node_dict[ipAddress].pos))
+                        logging.info("".join(
+                            ["resolved host = ", host["host"], " for IP = ", host["ip"], " in position ",
+                             str(self.node_dict[ipAddress].pos)]))
                 # if BAD: it may be a "white-listed" owner -> make it GOOD again
                 # NOTE: when we marked host as BAD, we didn't yet know the owner and could not check if it was white-listed
                 if self.node_dict[ipAddress].bad:
                     for owner in configuration.WhiteListOwner:
                         # check if owner in whosip (ignore upper/lower case)
                         # TODO: improvement: store all individual fields of whosip in separate fieds in node so we can use them directly without parsing
-                        if re.search("Owner Name: "+owner,  self.node_dict[ipAddress].whosip, re.IGNORECASE) != None:
+                        if re.search("".join(["Owner Name: ", owner]), self.node_dict[ipAddress].whosip,
+                                     re.IGNORECASE) != None:
                             # mark as good again
                             self.node_dict[ipAddress].bad = False
-                            logging.warning("\n\"WARNING! previously detected illegal IP {0} in country {1} is set back to GOOD cause whilte-list owner = {2}\"".format(ipAddress,  self.node_dict[ipAddress].country_iso,  owner))
+                            logging.warning(
+                                "\n\"WARNING! previously detected illegal IP {0} in country {1} is set back to GOOD cause whilte-list owner = {2}\"".format(
+                                    ipAddress, self.node_dict[ipAddress].country_iso, owner))
                             self.sanitized_ip.append(ipAddress)
                             break
                     # if we are still BAD it means bad IP has no white-listed owner
                     if self.node_dict[ipAddress].bad == True:
-                        logging.info("\n\"ALARM CONFIRMATION! the detected illegal IP {0} in country {1} is indeed a BAD guy.\"".format(ipAddress,  self.node_dict[ipAddress].country_iso))
+                        logging.info(
+                            "\n\"ALARM CONFIRMATION! the detected illegal IP {0} in country {1} is indeed a BAD guy.\"".format(
+                                ipAddress, self.node_dict[ipAddress].country_iso))
                 # else if not yet BAD: it may be an illegal OWNER -> make it BAD and add it to firewall rule
                 else:
                     # owner empty?
                     if re.search("Owner Name:,", self.node_dict[ipAddress].whosip) != None:
                         logging.info("Owner is empty so we assume it is BAD!")
                         self.node_dict[ipAddress].bad = True
-                        logging.info("\n\"ALARM! detected illegal owner {0} with IP {1} in country {2}\"".format("",  ipAddress,  self.node_dict[ipAddress].country_iso))
+                        logging.info(
+                            "\n\"ALARM! detected illegal owner {0} with IP {1} in country {2}\"".format("", ipAddress,
+                                                                                                        self.node_dict[
+                                                                                                            ipAddress].country_iso))
                     # otherwise check black list of owners
                     else:
                         for badOwner in configuration.BlackListOwner:
                             # black-listed owner?
-                            if re.search("Owner Name: "+badOwner,  self.node_dict[ipAddress].whosip, re.IGNORECASE) != None:
+                            if re.search("".join(["Owner Name: ", badOwner]), self.node_dict[ipAddress].whosip,
+                                         re.IGNORECASE) != None:
                                 reallyBad = True
                                 # got black-listed owner string but - just to be 100% sure - we check that owner does NOT contain string in white-list
                                 for goodOwner in configuration.WhiteListOwner:
-                                    if re.search("Owner Name: "+goodOwner,  self.node_dict[ipAddress].whosip, re.IGNORECASE) != None:
+                                    if re.search("".join(["Owner Name: ", goodOwner]), self.node_dict[ipAddress].whosip,
+                                                 re.IGNORECASE) != None:
                                         # got white-listed owner string, although we had black-listed owner string
-                                        logging.info("What? got good owner string {0}, although we had bad owner string {1}. Just to be sure we leave it as GOOD!".format(goodOwner,  badOwner))
+                                        logging.info(
+                                            "What? got good owner string {0}, although we had bad owner string {1}. Just to be sure we leave it as GOOD!".format(
+                                                goodOwner, badOwner))
                                         reallyBad = False
                                         break
-                                # owner in black-list and NOT in white-list    
+                                # owner in black-list and NOT in white-list
                                 if reallyBad:
                                     self.node_dict[ipAddress].bad = True
-                                    logging.info("\n\"ALARM! detected illegal owner {0} with IP {1} in country {2}\"".format(badOwner,  ipAddress,  self.node_dict[ipAddress].country_iso))
+                                    logging.info(
+                                        "\n\"ALARM! detected illegal owner {0} with IP {1} in country {2}\"".format(
+                                            badOwner, ipAddress, self.node_dict[ipAddress].country_iso))
                                     break
-                                
+
                 # handle BAD host as it corresponds
                 if self.node_dict[ipAddress].bad == True:
                     logging.info("\n\"Processing bad IP = {0} \"".format(ipAddress))
@@ -973,9 +1050,9 @@ class ProcessorClass(object):
                         # are we running as root?
                         if os.geteuid() == 0:
                             if configuration.ASK_BEFORE_ADDING_RULE:
-                                node_infos = str(self.node_dict[ipAddress].host) + "\n" + \
-                                             str(self.node_dict[ipAddress].region) + "\n" + \
-                                             str(self.node_dict[ipAddress].city)
+                                node_infos = "".join([str(self.node_dict[ipAddress].host), "\n", \
+                                                      str(self.node_dict[ipAddress].region), "\n", \
+                                                      str(self.node_dict[ipAddress].city)])
                                 question = Question(ipAddress, node_infos)
                                 self.__mutex_question.acquire()
                                 try:
@@ -985,21 +1062,23 @@ class ProcessorClass(object):
                                 finally:
                                     self.__mutex_question.release()
                             else:
-                                response_src_temp = str(self.node_dict[ipAddress].country_iso)+","+str(self.node_dict[ipAddress].city)
-                                response_src_temp = response_src_temp+","+str(self.node_dict[ipAddress].whosip).replace("'", "")
+                                response_src_temp = "".join([str(self.node_dict[ipAddress].country_iso), ",",
+                                                             str(self.node_dict[ipAddress].city), ",",
+                                                             str(self.node_dict[ipAddress].whosip).replace("'", "")])
                                 # and now remove all spaces
                                 # firewall does not like spaces
                                 response_src_temp = response_src_temp.replace(" ", "")
                                 self.firewallManagerObject.putHostToRule(ipAddress, response_src_temp)
                         else:
-                            logging.error("ERROR: shall add rule to firewall to block IP " + ipAddress + " but have no root privileges!")
+                            logging.error(
+                                "ERROR: shall add rule to firewall to block IP " + ipAddress + " but have no root privileges!")
                     # play alarm?
                     if configuration.SOUND:
                         playsound_block_false('IPRadar2/Sounds/Alarm/salamisound-8723691-alarm-sirene-auto.mp3')
-                        
+
                 # add/modify updated IP to GUI-List
                 self.__mutex.acquire()
-                self.node_dict_gui[ipAddress] =  self.node_dict[ipAddress]
+                self.node_dict_gui[ipAddress] = self.node_dict[ipAddress]
                 self.__mutex.release()
 
             # set flag to update GUI
@@ -1010,24 +1089,24 @@ class ProcessorClass(object):
         killed_ip_dict = self.badConnectionKillerObject.getKilledIPs()
         if killed_ip_dict:
             # loop dict of killed connections
-            for killed_ip,  killed_process in killed_ip_dict.items():
+            for killed_ip, killed_process in killed_ip_dict.items():
                 # mark node as killed (if available in node dict)
                 if killed_ip in self.node_dict:
                     self.node_dict[killed_ip].killed = True
                     self.node_dict[killed_ip].killed_process = killed_process
                     # add/modify updated IP to GUI-List
                     self.__mutex.acquire()
-                    self.node_dict_gui[killed_ip] =  self.node_dict[killed_ip]
+                    self.node_dict_gui[killed_ip] = self.node_dict[killed_ip]
                     self.__mutex.release()
                 # loop all nodes
                 for ip in self.node_dict:
                     if killed_ip in self.node_dict[ip].comm_partner_list:
                         self.node_dict[ip].comm_partner_list_killed.append(killed_ip)
                         self.node_dict[ip].comm_partner_list.remove(killed_ip)
-                        logging.info("Killed connection "+ip+" to "+killed_ip)
+                        logging.info("".join(["Killed connection ", ip, " to ", killed_ip]))
                         # add/modify updated IP to GUI-List
                         self.__mutex.acquire()
-                        self.node_dict_gui[ip] =  self.node_dict[ip]
+                        self.node_dict_gui[ip] = self.node_dict[ip]
                         self.__mutex.release()
             self.needUpdate = True
 
@@ -1036,7 +1115,7 @@ class ProcessorClass(object):
         oldNrOfConnections = len(self.connected_ip_list)
         connected_ip_list_temp = self.badConnectionKillerObject.getConnectedIPs()
         # need deepcopy so we can remove unknown IPs later
-        connected_ip_list_local = deepcopy(connected_ip_list_temp) 
+        connected_ip_list_local = deepcopy(connected_ip_list_temp)
         if connected_ip_list_local:
             # first clear all connection flags which don't exist anymore
             for oldConnectedIP in self.connected_ip_list:
@@ -1053,20 +1132,20 @@ class ProcessorClass(object):
                     connected_ip_list_temp.remove(connected_ip)
             # cross-check to detect changes and inform GUI
             for ip in self.connected_ip_list:
-               if ip not in connected_ip_list_temp:
+                if ip not in connected_ip_list_temp:
                     # add/modify updated IP to GUI-List
                     # may be connection of IP whic is not (yet) registered
                     if ip in self.node_dict:
                         self.__mutex.acquire()
-                        self.node_dict_gui[ip] =  self.node_dict[ip]
+                        self.node_dict_gui[ip] = self.node_dict[ip]
                         self.__mutex.release()
             for ip in connected_ip_list_temp:
-               if ip not in self.connected_ip_list:
+                if ip not in self.connected_ip_list:
                     # add/modify updated IP to GUI-List
                     # may be connection of IP whic is not (yet) registered
                     if ip in self.node_dict:
                         self.__mutex.acquire()
-                        self.node_dict_gui[ip] =  self.node_dict[ip]
+                        self.node_dict_gui[ip] = self.node_dict[ip]
                         self.__mutex.release()
             # update list of connected IPs
             self.connected_ip_list = connected_ip_list_temp
@@ -1078,7 +1157,7 @@ class ProcessorClass(object):
                 # so we need to check if there are really zero connections by checking nr. of connections
                 if self.badConnectionKillerObject.getNumberOfConnections() == 0:
                     for oldConnectedIP in self.connected_ip_list:
-                        # for some reason we need this check. 
+                        # for some reason we need this check.
                         # TODO: how is it possible that the oldConnectedIP is NOT in the node_dict?
                         # we checked before and we copied from connected_ip_list_temp only IPs that exist in node_dict..
                         if oldConnectedIP in self.node_dict:
@@ -1092,7 +1171,8 @@ class ProcessorClass(object):
                     self.connected_ip_list = []
                 else:
                     # TODO: correct this behavior: if getConnectedIPs() returns permanently empty list
-                    logging.error("Error: nr. of connections = " + str(self.badConnectionKillerObject.getNumberOfConnections()) + " but returned list is empty!")
+                    logging.error("Error: nr. of connections = " + str(
+                        self.badConnectionKillerObject.getNumberOfConnections()) + " but returned list is empty!")
         # need update?
         # for now we only update when previous nr. of connections differs to current nr. of connections
         # TODO: cover also the case where changes in connections result in the same number of connections
@@ -1114,7 +1194,8 @@ class ProcessorClass(object):
     # de-queued packets are processed here
     # set flag to "re-draw" map e.g. if new connection received!
     def processPacket(self, packet):
-        logging.debug("processing nr. of packets = " + str(self.processedPacketsCount) + ", still in queue " + str(self.sizeOfProcessingQueue))
+        logging.debug("processing nr. of packets = " + str(self.processedPacketsCount) + ", still in queue " + str(
+            self.sizeOfProcessingQueue))
         # local copies of IPs
         source = packet.ip.src
         destination = packet.ip.dst
@@ -1133,101 +1214,101 @@ class ProcessorClass(object):
         # set SRC host if local
         if source.startswith(self.netlocal):
             if source == configuration.ROUTER_IP:
-                host_src = source + " (router src) " + self.publicHost # public host for router/gateway
+                host_src = "".join([source, " (router src) ", self.publicHost])  # public host for router/gateway
             elif source == self.local:
-                host_src = source + " (my device src) " + self.localHost
+                host_src = "".join([source, " (my device src) ", self.localHost])
                 transmitting = True
             else:
-                host_src = source + " (local src) " + self.get_domain_name(source)
+                host_src = "".join([source, " (local src) ", self.get_domain_name(source)])
             src_is_local = True
             host_src_resolved = True
         elif src_ip_address.is_reserved:
-            host_src = source + " (reserved src IP) "
+            host_src = "".join([source, " (reserved src IP) "])
             src_is_local = True
             host_src_resolved = True
             src_special_ip = True
         elif src_ip_address.is_unspecified:
-            host_src = source + " (unspecified src IP) "
+            host_src = "".join([source, " (unspecified src IP) "])
             src_is_local = True
             host_src_resolved = True
             src_special_ip = True
         elif src_ip_address.is_loopback:
-            host_src = source + " (loopback src IP) " #
+            host_src = "".join([source, " (loopback src IP) "])
             src_is_local = True
             host_src_resolved = True
             src_special_ip = True
         elif src_ip_address.is_link_local:
-            host_src = source + " (link-local src IP) "
+            host_src = "".join([source, " (link-local src IP) "])
             src_is_local = True
             host_src_resolved = True
         elif src_ip_address.is_private:
-            host_src = source + " (private src IP - but not configured!) "
+            host_src = "".join([source, " (private src IP - but not configured!) "])
             src_is_local = True
             host_src_resolved = True
             src_special_ip = True
         elif src_ip_address.is_global:
-            host_src = source + " (global src IP) "
+            host_src = "".join([source, " (global src IP) "])
         else:
-            host_src = source + " src_host"
+            host_src = "".join([source, " src_host"])
         # and now set DST host if local
         if destination.startswith(self.netlocal):
             if destination == configuration.ROUTER_IP:
-                host_dst = destination + " (router dst) " + self.publicHost # public host for router/gateway
+                host_dst = "".join([destination, " (router dst) ", self.publicHost])  # public host for router/gateway
             elif destination == self.local:
-                host_dst = destination + " (my device dst) " + self.localHost
+                host_dst = "".join([destination, " (my device dst) ", self.localHost])
                 receiving = True
             # Subnet Broadcast (also called Direct Broadcast)?
             elif destination == self.net.broadcast_address.compressed:
-                host_dst = destination + " (subnet broadcast dst IP) "
+                host_dst = "".join([destination, " (subnet broadcast dst IP) "])
                 dst_special_ip = True
             else:
-                host_dst = destination + " (local dst) " + self.get_domain_name(destination)
+                host_dst = "".join([destination, " (local dst) ", self.get_domain_name(destination)])
             dst_is_local = True
             host_dst_resolved = True
         elif dst_ip_address.is_multicast:
-            host_dst = destination + " (multicast dst IP) "
+            host_dst = "".join([destination, " (multicast dst IP) "])
             dst_is_local = True
             host_dst_resolved = True
             dst_special_ip = True
         elif destination == "255.255.255.255":
-            host_dst = destination + " (broadcast dst IP) "
+            host_dst = "".join([destination, " (broadcast dst IP) "])
             dst_is_local = True
             host_dst_resolved = True
             dst_special_ip = True
         elif dst_ip_address.is_loopback:
-            host_dst = destination + " (loopback dst IP) "
+            host_dst = "".join([destination, " (loopback dst IP) "])
             dst_is_local = True
             host_dst_resolved = True
             dst_special_ip = True
-        elif dst_ip_address.is_unspecified: # TODO: check if this is possible
-            host_dst = destination + " (unspecified dst IP) "
+        elif dst_ip_address.is_unspecified:  # TODO: check if this is possible
+            host_dst = "".join([destination, " (unspecified dst IP) "])
             dst_is_local = True
             host_dst_resolved = True
             dst_special_ip = True
-        elif dst_ip_address.is_link_local: # TODO: check if this is possible
-            host_dst = destination + " (link-local dst IP) "
+        elif dst_ip_address.is_link_local:  # TODO: check if this is possible
+            host_dst = "".join([destination, " (link-local dst IP) "])
             dst_is_local = True
             host_dst_resolved = True
         elif dst_ip_address.is_private:
-            host_dst = destination + " (private dst IP - but not configured!) "
+            host_dst = "".join([destination, " (private dst IP - but not configured!) "])
             dst_is_local = True
             host_dst_resolved = True
         elif dst_ip_address.is_global:
-            host_dst = destination + " (global dst IP) "
+            host_dst = "".join([destination, " (global dst IP) "])
         else:
-            host_dst = destination + " dst_host"
+            host_dst = "".join([destination, " dst_host"])
         # nr. of TX and RX KiloBytes
         if transmitting:
-            self.tx_kilo_bytes = self.tx_kilo_bytes + float(packet.length)/1024.0
-            self.tx_kilo_bytes_alarm = self.tx_kilo_bytes_alarm + float(packet.length)/1024.0
+            self.tx_kilo_bytes = self.tx_kilo_bytes + float(packet.length) / 1024.0
+            self.tx_kilo_bytes_alarm = self.tx_kilo_bytes_alarm + float(packet.length) / 1024.0
             if self.tx_kilo_bytes_alarm > configuration.MAX_TX_KILOBYTES:
                 # set to zero and start counting again...until we reach MAX_TX_KILOBYTES again
                 self.tx_kilo_bytes_alarm = 0.0
-                logging.info("ALARM: got more TX bytes than maximum = " + str(configuration.MAX_TX_KILOBYTES))
+                logging.info("".join(["ALARM: got more TX bytes than maximum = ", str(configuration.MAX_TX_KILOBYTES)]))
                 if configuration.SOUND:
                     playsound_block_false('IPRadar2/Sounds/Alarm/salamisound-4299638-alarm-sirene-13-mal-heulen.mp3')
         elif receiving:
-            self.rx_kilo_bytes = self.rx_kilo_bytes + float(packet.length)/1024.0
+            self.rx_kilo_bytes = self.rx_kilo_bytes + float(packet.length) / 1024.0
         # is this a NEW connection?
         newConnection = True
         if source in self.node_dict:
@@ -1282,7 +1363,7 @@ class ProcessorClass(object):
                 js = response_src.to_json()
                 # append to file only if really resolved
                 if geoLocationNotResolved == False:
-                    locationsFile = open("IPRadar2/Config/locationsResolved.json",  "a", encoding="utf-8")
+                    locationsFile = open("IPRadar2/Config/locationsResolved.json", "a", encoding="utf-8")
                     locationsFile.write(js)
                     locationsFile.write("\n")
                     locationsFile.close()
@@ -1312,7 +1393,8 @@ class ProcessorClass(object):
                     # WORKARDOUND:
                     # sometimes DbIpCity returns lat, lon = None, None
                     if response_dst.latitude == None or response_dst.longitude == None:
-                        logging.warning("Warning: DbIpCity.get(" + destination + ") lat, Lon = None. Assigning default values.")
+                        logging.warning("".join(
+                            ["Warning: DbIpCity.get(", destination, ") lat, Lon = None. Assigning default values."]))
                         # we set a default lat lon
                         response_dst.latitude = 0.1
                         response_dst.longitude = 0.1
@@ -1328,7 +1410,7 @@ class ProcessorClass(object):
                 js = response_dst.to_json()
                 # append to file only if really resolved
                 if geoLocationNotResolved == False:
-                    locationsFile = open("IPRadar2/Config/locationsResolved.json",  "a", encoding="utf-8")
+                    locationsFile = open("IPRadar2/Config/locationsResolved.json", "a", encoding="utf-8")
                     locationsFile.write(js)
                     locationsFile.write("\n")
                     locationsFile.close()
@@ -1343,7 +1425,8 @@ class ProcessorClass(object):
                     logging.info("ping source IP = " + source)
                     self.pingResolverObject.putHostToPing(source)
                 # we always ping new host as a destination:
-                if (destination not in self.hostsPingRequested) and (destination != self.local) and (dst_special_ip == False):
+                if (destination not in self.hostsPingRequested) and (destination != self.local) and (
+                        dst_special_ip == False):
                     self.hostsPingRequested.append(destination)
                     logging.info("ping destination IP = " + destination)
                     self.pingResolverObject.putHostToPing(destination)
@@ -1354,7 +1437,7 @@ class ProcessorClass(object):
                     # if an "unknown" host was added to the list then we don't flag it as resolved
                     if "(unknown)" not in host_src:
                         host_src_resolved = True
-                elif source not in self.hostsResolutionRequested: # could be currently in request
+                elif source not in self.hostsResolutionRequested:  # could be currently in request
                     self.hostsResolutionRequested.append(source)
                     self.hostResolverObject.putHostToResolve(source)
                     if configuration.SOUND and not configuration.ONLY_ALARMS_SOUND:
@@ -1365,7 +1448,7 @@ class ProcessorClass(object):
                     # if an "unknown" host was added to the list then we don't flag it as resolved
                     if "(unknown)" not in host_dst:
                         host_dst_resolved = True
-                elif destination not in self.hostsResolutionRequested: # could be currently in request
+                elif destination not in self.hostsResolutionRequested:  # could be currently in request
                     self.hostsResolutionRequested.append(destination)
                     self.hostResolverObject.putHostToResolve(destination)
                     if configuration.SOUND and not configuration.ONLY_ALARMS_SOUND:
@@ -1407,103 +1490,134 @@ class ProcessorClass(object):
                 if destination not in self.node_dict:
                     # add destination in node_dict (1.b)
                     case = "1b"
-                    dest_node = NodeDataClass(self.currentNodeNumber, destination, mac_dst, response_dst.latitude,  response_dst.longitude,  response_dst.latitude,  response_dst.longitude, 1,
-                                        response_dst.country, pycountry.countries.get(alpha_2=response_dst.country),
-                                        response_dst.region, response_dst.city,  host_dst, True, "", host_dst_resolved, ping=False, bad=False, killed=False, killed_process="", local=dst_is_local, conn_established=False,
-                                        tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()), time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[], comm_partner_list_killed=[])
-                    self.node_dict[destination] = dest_node # new value in dict with key destination (its like an "append")
+                    dest_node = NodeDataClass(self.currentNodeNumber, destination, mac_dst, response_dst.latitude,
+                                              response_dst.longitude, response_dst.latitude, response_dst.longitude, 1,
+                                              response_dst.country,
+                                              pycountry.countries.get(alpha_2=response_dst.country),
+                                              response_dst.region, response_dst.city, host_dst, True, "",
+                                              host_dst_resolved, ping=False, bad=False, killed=False, killed_process="",
+                                              local=dst_is_local, conn_established=False,
+                                              tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()),
+                                              time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[],
+                                              comm_partner_list_killed=[])
+                    self.node_dict[
+                        destination] = dest_node  # new value in dict with key destination (its like an "append")
                     self.currentNodeNumber = self.currentNodeNumber + 1
                 else:
                     case = "1a"
             else:
                 # add source in node_dict
-                source_node = NodeDataClass(self.currentNodeNumber, source, mac_src, response_src.latitude,  response_src.longitude,  response_src.latitude,  response_src.longitude,  1,
-                                        response_src.country, pycountry.countries.get(alpha_2=response_src.country),
-                                        response_src.region, response_src.city,  host_src, True, "",  host_src_resolved, ping=False, bad=False, killed=False, killed_process="", local=src_is_local, conn_established=False,
-                                        tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()), time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[destination], comm_partner_list_killed=[])
-                self.node_dict[source] = source_node # new value in dict with key source (its like an "append")
+                source_node = NodeDataClass(self.currentNodeNumber, source, mac_src, response_src.latitude,
+                                            response_src.longitude, response_src.latitude, response_src.longitude, 1,
+                                            response_src.country, pycountry.countries.get(alpha_2=response_src.country),
+                                            response_src.region, response_src.city, host_src, True, "",
+                                            host_src_resolved, ping=False, bad=False, killed=False, killed_process="",
+                                            local=src_is_local, conn_established=False,
+                                            tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()),
+                                            time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[destination],
+                                            comm_partner_list_killed=[])
+                self.node_dict[source] = source_node  # new value in dict with key source (its like an "append")
                 self.currentNodeNumber = self.currentNodeNumber + 1
                 # no source, check if destination exists
                 if destination not in self.node_dict:
                     # add destination in node_dict (2.b)
                     case = "2b"
-                    dest_node = NodeDataClass(self.currentNodeNumber, destination, mac_dst, response_dst.latitude,  response_dst.longitude,  response_dst.latitude,  response_dst.longitude,  1,
-                                        response_dst.country, pycountry.countries.get(alpha_2=response_dst.country),
-                                        response_dst.region, response_dst.city,  host_dst, True, "",  host_dst_resolved, ping=False, bad=False, killed=False, killed_process="", local=dst_is_local, conn_established=False,
-                                        tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()), time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[], comm_partner_list_killed=[])
-                    self.node_dict[destination] = dest_node # new value in dict with key destination (its like an "append")
+                    dest_node = NodeDataClass(self.currentNodeNumber, destination, mac_dst, response_dst.latitude,
+                                              response_dst.longitude, response_dst.latitude, response_dst.longitude, 1,
+                                              response_dst.country,
+                                              pycountry.countries.get(alpha_2=response_dst.country),
+                                              response_dst.region, response_dst.city, host_dst, True, "",
+                                              host_dst_resolved, ping=False, bad=False, killed=False, killed_process="",
+                                              local=dst_is_local, conn_established=False,
+                                              tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()),
+                                              time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[],
+                                              comm_partner_list_killed=[])
+                    self.node_dict[
+                        destination] = dest_node  # new value in dict with key destination (its like an "append")
                     self.currentNodeNumber = self.currentNodeNumber + 1
                 else:
                     case = "2a"
             ########################
             # update module variable location_dict (src)
-            latlonsrc = str(self.node_dict[source].lat) + "," + str(self.node_dict[source].lon)
+            latlonsrc = "".join([str(self.node_dict[source].lat), ",", str(self.node_dict[source].lon)])
             if latlonsrc in self.location_dict:
                 if case == "2a" or case == "2b":
                     # increment count
-                    self.location_dict[latlonsrc] = self.location_dict[latlonsrc] + 1 # updates value
+                    self.location_dict[latlonsrc] = self.location_dict[latlonsrc] + 1  # updates value
                     # update also  the source position in node_dict
                     self.node_dict[source].position = self.location_dict[latlonsrc]
                     # and update the drawing position
                     # GeoLocationPhi = math.radians(360.0/self.node_dict[source].position)
-                    GeoLocationPhi = math.radians(6.28*360.0/self.node_dict[source].position)
+                    GeoLocationPhi = math.radians(6.28 * 360.0 / self.node_dict[source].position)
                     # set delta to CIRCLE in geo-location
-                    latDelta = configuration.GeoLocationRadius*math.cos(GeoLocationPhi)
-                    lonDelta = configuration.GeoLocationRadius*math.sin(GeoLocationPhi)
-                    self.node_dict[source].lat_plot = self.node_dict[source].lat+latDelta
-                    self.node_dict[source].lon_plot = self.node_dict[source].lon+lonDelta
-            else: # it must be case 2a or 2b
+                    latDelta = configuration.GeoLocationRadius * math.cos(GeoLocationPhi)
+                    lonDelta = configuration.GeoLocationRadius * math.sin(GeoLocationPhi)
+                    self.node_dict[source].lat_plot = self.node_dict[source].lat + latDelta
+                    self.node_dict[source].lon_plot = self.node_dict[source].lon + lonDelta
+            else:  # it must be case 2a or 2b
                 # add NEW location
-                self.location_dict[latlonsrc] = 1 # new value 1 in dict with key latlonsrc (its like an "append")
+                self.location_dict[latlonsrc] = 1  # new value 1 in dict with key latlonsrc (its like an "append")
                 # NOTE: self.node_dict[source].position already set to 1 by default
             # update module variable location_dict (dst)
-            latlondst = str(self.node_dict[destination].lat) + "," + str(self.node_dict[destination].lon)
+            latlondst = "".join([str(self.node_dict[destination].lat), ",", str(self.node_dict[destination].lon)])
             if latlondst in self.location_dict:
                 if case == "1b" or case == "2b":
                     # increment count
-                    self.location_dict[latlondst] = self.location_dict[latlondst] + 1 # updates value
+                    self.location_dict[latlondst] = self.location_dict[latlondst] + 1  # updates value
                     # update also  the source position in node_dict
                     self.node_dict[destination].position = self.location_dict[latlondst]
                     # and update the drawing position
                     # GeoLocationPhi = math.radians(360.0/self.node_dict[destination].position)
-                    GeoLocationPhi = math.radians(6.28*360.0/self.node_dict[destination].position)
+                    GeoLocationPhi = math.radians(6.28 * 360.0 / self.node_dict[destination].position)
                     # set delta to CIRCLE in geo-location
-                    latDelta = configuration.GeoLocationRadius*math.cos(GeoLocationPhi)
-                    lonDelta = configuration.GeoLocationRadius*math.sin(GeoLocationPhi)
-                    self.node_dict[destination].lat_plot = self.node_dict[destination].lat+latDelta
-                    self.node_dict[destination].lon_plot = self.node_dict[destination].lon+lonDelta
-            else: # it must be case 1b or 2b
+                    latDelta = configuration.GeoLocationRadius * math.cos(GeoLocationPhi)
+                    lonDelta = configuration.GeoLocationRadius * math.sin(GeoLocationPhi)
+                    self.node_dict[destination].lat_plot = self.node_dict[destination].lat + latDelta
+                    self.node_dict[destination].lon_plot = self.node_dict[destination].lon + lonDelta
+            else:  # it must be case 1b or 2b
                 # add NEW location
-                self.location_dict[latlondst] = 1 # new value (its like an "append")
+                self.location_dict[latlondst] = 1  # new value (its like an "append")
                 # NOTE: self.node_dict[destination].position already set to 1 by default
             # src in black list / NOT in white list?
             if configuration.USE_WHITE_LIST:
-                badIP = ((response_src.country not in configuration.WhiteList) and (response_src.city not in configuration.WhiteListCity)) or (response_src.city in configuration.BlackListCity)
+                badIP = ((response_src.country not in configuration.WhiteList) and (
+                            response_src.city not in configuration.WhiteListCity)) or (
+                                    response_src.city in configuration.BlackListCity)
             else:
-                badIP = ((response_src.country in configuration.BlackList) and (response_src.city not in configuration.WhiteListCity)) or (response_src.city in configuration.BlackListCity)
+                badIP = ((response_src.country in configuration.BlackList) and (
+                            response_src.city not in configuration.WhiteListCity)) or (
+                                    response_src.city in configuration.BlackListCity)
             if badIP:
                 # TODO: check this workaround - why do we need to check against sanitized_ip?
                 if source not in self.sanitized_ip:
                     self.node_dict[source].bad = True
-                    logging.info("\n\"ALARM! detected PRESUMABLY illegal IP {0} in country {1}, city {2} but owner not yet known.\"".format(source,  response_src.country,  response_src.city))
+                    logging.info(
+                        "\n\"ALARM! detected PRESUMABLY illegal IP {0} in country {1}, city {2} but owner not yet known.\"".format(
+                            source, response_src.country, response_src.city))
                     # we delay putIPToKill(), adding rule to firewall and playing sound because it may be a whilte-listed onwer and we don't yet know the owner..
             # dst in black list or NOT in white list?
             if configuration.USE_WHITE_LIST:
-                badIP = ((response_dst.country not in configuration.WhiteList) and (response_dst.city not in configuration.WhiteListCity)) or (response_dst.city in configuration.BlackListCity)
+                badIP = ((response_dst.country not in configuration.WhiteList) and (
+                            response_dst.city not in configuration.WhiteListCity)) or (
+                                    response_dst.city in configuration.BlackListCity)
             else:
-                badIP = ((response_dst.country in configuration.BlackList) and (response_dst.city not in configuration.WhiteListCity)) or (response_dst.city in configuration.BlackListCity)
+                badIP = ((response_dst.country in configuration.BlackList) and (
+                            response_dst.city not in configuration.WhiteListCity)) or (
+                                    response_dst.city in configuration.BlackListCity)
             if badIP:
                 # TODO: check this workaround - why do we need to check against sanitized_ip?
                 if destination not in self.sanitized_ip:
                     self.node_dict[destination].bad = True
-                    logging.info("\n\"ALARM! detected PRESUMABLY illegal IP {0} in country {1}, city {2} but owner not yet known.\"".format(destination,  response_dst.country,  response_dst.city))
+                    logging.info(
+                        "\n\"ALARM! detected PRESUMABLY illegal IP {0} in country {1}, city {2} but owner not yet known.\"".format(
+                            destination, response_dst.country, response_dst.city))
                     # we delay putIPToKill(), adding rule to firewall and playing sound because it may be a whilte-listed onwer and we don't yet know the owner..
             # print geolocations in CONSOLE
             log_geolocations(response_src, response_dst, self.node_dict[source].host, self.node_dict[destination].host)
             # add new IP to GUI-List
             # eventually both, source and destination have been created or modified
             self.__mutex.acquire()
-            self.node_dict_gui[source] =  self.node_dict[source]
+            self.node_dict_gui[source] = self.node_dict[source]
             self.node_dict_gui[destination] = self.node_dict[destination]
             self.__mutex.release()
             # plot map is handled in block outside "if newConnection"
@@ -1518,10 +1632,10 @@ class ProcessorClass(object):
         # increment nr. of sent bytes from local in .rx of destination, so it can be shown in marker.
         rx = int(self.node_dict[destination].rx) + int(packet.length)
         self.node_dict[destination].rx = rx
-        self.node_dict[destination].rx_kB = rx//1000
+        self.node_dict[destination].rx_kB = rx // 1000
         tx = int(self.node_dict[source].tx) + int(packet.length)
         self.node_dict[source].tx = tx
-        self.node_dict[source].tx_kB = tx//1000
+        self.node_dict[source].tx_kB = tx // 1000
         # update self.node_dict_gui only if data is sent to outside: Local -> Extern
         if src_is_local == True:
             self.__mutex.acquire()
@@ -1529,8 +1643,6 @@ class ProcessorClass(object):
             self.__mutex.release()
             # set flag to update plot
             self.needUpdate = True
-            # txt = "Log level X: "+destination+" received "+str(packet.length)+", total = "+str(rx)
-            # logging.debug(txt)
         # end of common block for existent and new IP addresses
         #######################################################
         if newConnection:
@@ -1545,7 +1657,7 @@ class ProcessorClass(object):
         self.__mutex.acquire()
         try:
             if self.node_dict_gui:
-                for key,  value in self.node_dict_gui.items():
+                for key, value in self.node_dict_gui.items():
                     node_dict_gui_temp[key] = value
                 # now clear local list
                 self.node_dict_gui = {}
@@ -1559,7 +1671,7 @@ class ProcessorClass(object):
         return node_dict_gui_temp
 
     # switch queues when currently used queue gets empty (was guaranteed before call)
-    def switchQueues(self): 
+    def switchQueues(self):
         if self.currentCallbackQueueIsA[0] == False:
             # queue is empty, we switch:
             # self.inputPacketsCount = 0
@@ -1574,14 +1686,15 @@ class ProcessorClass(object):
             logging.debug("\nLog level X: switch to callback queue B")
 
     def addDenyFirewallRule(self, ipAddress):
-        response_src_temp = str(self.node_dict[ipAddress].country_iso) + "," + str(self.node_dict[ipAddress].city)
-        response_src_temp = response_src_temp + "," + str(self.node_dict[ipAddress].whosip).replace("'", "")
+        response_src_temp = "".join(
+            [str(self.node_dict[ipAddress].country_iso), ",", str(self.node_dict[ipAddress].city), ",",
+             str(self.node_dict[ipAddress].whosip).replace("'", "")])
         # and now remove all spaces, firewall doesn't like spaces
         response_src_temp = response_src_temp.replace(" ", "")
         self.firewallManagerObject.putHostToRule(ipAddress, response_src_temp)
 
     # thread to processing packets in queue
-    def processingThread(self,  packetQueueA,  packetQueueB,  currentCallbackQueueIsA,  locationsRead):
+    def processingThread(self, packetQueueA, packetQueueB, currentCallbackQueueIsA, locationsRead):
         # set processor variables
         self.packetQueueA = packetQueueA
         self.packetQueueB = packetQueueB
@@ -1596,8 +1709,8 @@ class ProcessorClass(object):
         # first time we need to wait for data on queue A,
         # we continue when queue has at least one element
         if configuration.USE_DOUBLE_BUFFER == True:
-            while self.packetQueueA.empty(): # default queue at startup is A
-                time.sleep(0.1) # 100ms
+            while self.packetQueueA.empty():  # default queue at startup is A
+                time.sleep(0.1)  # 100ms
             # we switch queue
             # self.inputPacketsCount = 0
             self.processedPacketsCount = 0
@@ -1614,7 +1727,7 @@ class ProcessorClass(object):
                 if self.packetQueueA.empty() == False:
                     try:
                         packet = self.packetQueueA.get_nowait()
-                        if  packet != None:
+                        if packet != None:
                             self.processedPacketsCount = self.processedPacketsCount + 1
                             logging.debug("\nmain loop(A) pkt-nr = " + str(self.processedPacketsCount))
                             self.sizeOfProcessingQueue = self.packetQueueA.qsize()
@@ -1630,7 +1743,7 @@ class ProcessorClass(object):
                 if self.packetQueueB.empty() == False:
                     try:
                         packet = self.packetQueueB.get_nowait()
-                        if  packet != None:
+                        if packet != None:
                             self.processedPacketsCount = self.processedPacketsCount + 1
                             logging.debug("\nmain loop(B) pkt-nr = " + str(self.processedPacketsCount))
                             self.sizeOfProcessingQueue = self.packetQueueB.qsize()
@@ -1640,7 +1753,7 @@ class ProcessorClass(object):
                                 # switch only if the other queue is NOT empty, otherwise continue with queueB
                                 if self.packetQueueA.empty() == False:
                                     self.switchQueues()
-                    except Exception: # as e:
+                    except Exception:  # as e:
                         logging.exception("Exception in packet processing in Queue B: " + str(e))
             # currentTime
             timeDiff = time.time() - startTime
