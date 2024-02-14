@@ -47,7 +47,7 @@ class HostResolverClass(object):
     def whosip(self,  hostIP):
         whosip_response = "Owner Name: __unknown__"
         try:
-            command = "whois " + hostIP + " | grep -e OrgName: -e org-name: -e org: -e descr: -e role:"
+            command = "".join(["whois " , hostIP , " | grep -e OrgName: -e org-name: -e org: -e descr: -e role:"])
             logging.info(command)
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             out, err = p1.communicate()
@@ -61,7 +61,7 @@ class HostResolverClass(object):
                 org_name = org_name.replace(' ', '_')
                 org_name = org_name.replace(',', '_')
                 org_name = org_name.replace('\n', '_')
-                whosip_response = "Owner Name: " + org_name
+                whosip_response = "".join(["Owner Name: " , org_name])
             else:
                 p1.terminate()
                 p1.kill()
@@ -70,7 +70,7 @@ class HostResolverClass(object):
             logging.exception("whosip(): Exception: " + str(e))
         host = self.get_domain_name(hostIP)
         # build dictionary element
-        dict_elem_host = {"ip" : hostIP, "host" : hostIP + " " + host, "whosip" : whosip_response}
+        dict_elem_host = {"ip" : hostIP, "host" : "".join([hostIP , " " , host]), "whosip" : whosip_response}
         return dict_elem_host
 
     # de-queued hosts are processed here
@@ -79,7 +79,7 @@ class HostResolverClass(object):
         self.__mutexSolved.acquire()
         try:
             dict_elem_host = self.whosip(hostIP)
-            logging.info("resolved host as dict: " + dict_elem_host["ip"])
+            logging.info("".join(["resolved host as dict: " , dict_elem_host["ip"]]))
             self.__hostResolvedList.append(dict_elem_host)
             self.countersLock.acquire()
             self.hostsResolved = self.hostsResolved + 1
@@ -160,3 +160,4 @@ class HostResolverClass(object):
         tempVal = self.hostsFailed
         self.countersLock.release()
         return tempVal
+    
