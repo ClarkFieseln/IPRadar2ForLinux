@@ -1,4 +1,4 @@
-Instructions to install IPRadar2 (2024.02.10):
+Instructions to install IPRadar2 (2024.02.14):
 
 **************************************************************************************************
 WARNING! 
@@ -32,6 +32,7 @@ Please consider this when using the tool.
      In this case the installation is done in the normal site-packages directory (systemwide).
      Here you may need to add missing tools:
          sudo apt install whois
+         sudo apt install traceroute
      Then, just type ipradar2 in a terminal to start the program.
      Besides steps 3) and 4), you don't need to read anymore if you just want to use the tool.
      I suggest you use a separate environment.
