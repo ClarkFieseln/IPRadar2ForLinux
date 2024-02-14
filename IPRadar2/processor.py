@@ -40,7 +40,7 @@ import struct
 import os
 from getmac import get_mac_address
 import time
-from memory_profiler import profile  # and use @profile in functions that may introduce memory leaks
+# from memory_profiler import profile  # and use @profile in functions that may introduce memory leaks
 
 
 
