@@ -44,10 +44,10 @@ class PingResolverClass(object):
                     if (configuration.PING_TIMEOUT_SEC - response_list.rtt_max) < configuration.PING_TIMEOUT_SEC*0.1:
                         logging.warning("WARNING: ping response close to max. value, rtt_max_ms = " + str(response_list.rtt_max_ms))
                 else:
-                    logging.info("Time out in Ping to IP = " +  hostIP)
+                    logging.info("".join(["Time out in Ping to IP = " , hostIP]))
             except Exception as e:
-                logging.exception("Exception in ping: " + str(e))
-                logging.exception("Exception in Ping to IP = " +  hostIP)
+                logging.exception("".join(["Exception in ping: " , str(e)]))
+                logging.exception("".join(["Exception in Ping to IP = " , hostIP]))
         else:
             # ping as non-root user
             try:
@@ -77,12 +77,12 @@ class PingResolverClass(object):
                     if (configuration.PING_TIMEOUT_SEC*1000.0 - float(rtt_max_ms)) < configuration.PING_TIMEOUT_SEC*100.0:
                         logging.warning("WARNING: ping response close to max. value, rtt_max_ms = " + rtt_max_ms)
                 else:
-                    logging.error("Error: could not execute ping correctly on host = " + hostIP)
+                    logging.error("".join(["Error: could not execute ping correctly on host = " , hostIP]))
             except Exception as e:  # avoid catching exceptions like SystemExit, KeyboardInterrupt, etc.
                 # NOTE: don't log the exception to keep output clean,
                 #       we get an exception e.g. when the pinged host does not answer
                 #       logging.exception("Exception in ping: " + str(e))
-                logging.warning("Exception in Ping to IP = " +  hostIP)
+                logging.warning("".join(["Exception in Ping to IP = " , hostIP]))
 
     # process hosts in queue
     ########################
