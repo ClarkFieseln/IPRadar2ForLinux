@@ -85,24 +85,24 @@ Please consider this when using the tool.
        - ROUTER_IP
    And of course adapt the settings for host location (MY_CITY,...) and map center location (MAP_CENTER_LAT,...).
 
-4) For playsound to work right, follow the instructions in Sounds/todo.txt.
-   Install tshark:
-       sudo apt update
-       sudo apt install tshark
-       To allow execution to non-root users answer YES.
-   If the tool was already installed on your system, you may want to allow execution to non-root users:
-       sudo dpkg-reconfigure wireshark-common
-       Answer YES.
-   Then you just need to add the user to the wireshark group. Type this:
-       sudo usermod -a -G wireshark $USER
-   Change your default group:
-       newgrp wireshark
-   After restart or log you will not need to change your default group anymore.
-   Set the corresponding paths in config.ini:
-       [tshark]
-       tshark_path     (find out with: whereis tshark)
-       [dumpcap]
-       dumpcap_path    (find out with: whereis dumpcap)
+4) - To use the optional feature sound follow the instructions in Sounds/todo.txt.
+   - Install tshark:
+         sudo apt update
+         sudo apt install tshark
+         To allow execution to non-root users answer YES.
+     If the tool was already installed on your system, you may want to allow execution to non-root users:
+         sudo dpkg-reconfigure wireshark-common
+         Answer YES.
+     Then you just need to add the user to the wireshark group. Type this:
+         sudo usermod -a -G wireshark $USER
+     Change your default group:
+         newgrp wireshark
+     After restart or log you will not need to change your default group anymore.
+     Set the corresponding paths in config.ini:
+         [tshark]
+         tshark_path     (find out with: whereis tshark)
+         [dumpcap]
+         dumpcap_path    (find out with: whereis dumpcap)
 
 5) Install further tools if required:
     Type in the IDE/PyCharm console or in a system terminal:
