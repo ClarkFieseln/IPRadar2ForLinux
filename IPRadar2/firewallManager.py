@@ -29,8 +29,8 @@ class FirewallManagerClass(object):
         try:
             currentTime = time.strftime("%Y_%m_%d_%H_%M_%S", time.gmtime())
             # 1) avoid duplicated entries by first trying:
-            logging.info("Check if firewall rule exists before adding it. IP = " +  hostIP)
-            command = "ufw status | grep \"" + configuration.RULE_NAME_STR + "\" | grep \"" + hostIP + "\""
+            logging.info("".join(["Check if firewall rule exists before adding it. IP = " , hostIP]))
+            command = "".join(["ufw status | grep \"" , configuration.RULE_NAME_STR , "\" | grep \"" , hostIP , "\""])
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             if p1.returncode == 0:
                 p1.terminate()
@@ -42,7 +42,7 @@ class FirewallManagerClass(object):
                 logging.debug("We can add inbound firewall rule!")
                 #################################################
                 # 2) add rule to block inbound traffic from BAD IP:
-                command = "ufw deny in comment \"IPRadar2-Block-"+currentTime+": in from "+self.ruledHostName[hostIP]+"\" from "+hostIP
+                command = "".join(["ufw deny in comment \"IPRadar2-Block-" , currentTime , ": in from " , self.ruledHostName[hostIP] , "\" from " , hostIP])
                 p2 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
                 p2.wait()
                 if p2.returncode == 0:
@@ -50,7 +50,7 @@ class FirewallManagerClass(object):
                     p2.kill()
                     # 3) add rule to block outbound traffic from BAD IP:
                     logging.debug("We can add outbound firewall rule!")
-                    command = "ufw deny out comment \"IPRadar2-Block-"+currentTime+": out to "+self.ruledHostName[hostIP]+"\" to "+hostIP
+                    command = "".join(["ufw deny out comment \"IPRadar2-Block-" , currentTime , ": out to " , self.ruledHostName[hostIP] , "\" to " , hostIP])
                     p3 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
                     p3.wait()
                     if p3.returncode == 0:
