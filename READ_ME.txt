@@ -30,6 +30,8 @@ Please consider this when using the tool.
      Alternatively, you may run the pip command with sudo:
          sudo pip install ipradar2
      In this case the installation is done in the normal site-packages directory (systemwide).
+     Here you may need to add missing tools:
+         sudo apt install whois
      Then, just type ipradar2 in a terminal to start the program.
      Besides steps 3) and 4), you don't need to read anymore if you just want to use the tool.
      I suggest you use a separate environment.
