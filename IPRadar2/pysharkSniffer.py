@@ -84,72 +84,72 @@ class pysharkSnifferClass:
             configuration.HEATMAP = True
             status = "ON"
         # update map
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
         return status
 
     def toggleShowNodes(self):
         configuration.SHOW_NODES = not configuration.SHOW_NODES
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowLabels(self):
         configuration.SHOW_LABELS = not configuration.SHOW_LABELS
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowConnections(self):
         configuration.SHOW_CONNECTIONS = not configuration.SHOW_CONNECTIONS
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowConnectionsActive(self):
         configuration.SHOW_CONNECTIONS_ACTIVE = not configuration.SHOW_CONNECTIONS_ACTIVE
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowInfo(self):
         configuration.SHOW_INFO = not configuration.SHOW_INFO
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowGoodHosts(self):
         configuration.SHOW_HOST_GOOD = not configuration.SHOW_HOST_GOOD
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowUnknownHosts(self):
         configuration.SHOW_HOST_UNKNOWN = not configuration.SHOW_HOST_UNKNOWN
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowBadHosts(self):
         configuration.SHOW_HOST_BAD = not configuration.SHOW_HOST_BAD
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowKilledHosts(self):
         configuration.SHOW_HOST_KILLED = not configuration.SHOW_HOST_KILLED
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowActiveHosts(self):
         configuration.SHOW_HOST_ACTIVE = not configuration.SHOW_HOST_ACTIVE
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowPingedNegHosts(self):
         configuration.SHOW_HOST_PING = not configuration.SHOW_HOST_PING
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowGoodConnections(self):
         configuration.SHOW_CONNECTION_GOOD = not configuration.SHOW_CONNECTION_GOOD
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowUnknownConnections(self):
         configuration.SHOW_CONNECTION_UNKNOWN = not configuration.SHOW_CONNECTION_UNKNOWN
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowBadConnections(self):
         configuration.SHOW_CONNECTION_BAD = not configuration.SHOW_CONNECTION_BAD
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def toggleShowKilledConnections(self):
         configuration.SHOW_CONNECTION_KILLED = not configuration.SHOW_CONNECTION_KILLED
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def setPlot(self,  set):
         configuration.PLOT = set
-        self.processorObject.plotMap()
+        self.processorObject.updateMap()
 
     def setSound(self,  set):
         configuration.SOUND = set
@@ -183,6 +183,15 @@ class pysharkSnifferClass:
 
     def addDenyFirewallRule(self, ip):
         return self.processorObject.addDenyFirewallRule(ip)
+
+    def getNumberOfInPackets(self):
+        return self.inputPacketsCount
+
+    def getNumberOfProcessedPackets(self):
+        return self.processorObject.getNumberOfProcessedPackets()
+
+    def getNumberOfQueuedPackets(self):
+        return self.processorObject.getNumberOfQueuedPackets()
 
     def getNumberOfTxKiloBytes(self):
         return self.processorObject.getNumberOfTxKiloBytes()
