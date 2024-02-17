@@ -101,6 +101,7 @@ class ProcessorClass(object):
     currentCallbackQueueIsA = [True]  # will be a reference to pysharkSniffer's variable
     locationsRead = [False]  # will be a reference to pysharkSniffer's variable
     processedPacketsCount = 0
+    sizeOfProcessingQueue = 0
     node_dict = {}
     location_dict = {}
     node_dict_gui = {}  # current dict of new/modified nodes to be shown/updated in GUI
@@ -137,6 +138,9 @@ class ProcessorClass(object):
     mac_router = ""
     close_app = False
 
+    def updateMap(self):
+        self.needUpdate = True
+
     def getNumberOfConnections(self):
         return self.badConnectionKillerObject.getNumberOfConnections()
 
@@ -166,6 +170,12 @@ class ProcessorClass(object):
             self.__questionListComplete = []
             self.__mutex_question.release()
         return questionListCompleteTemp
+
+    def getNumberOfProcessedPackets(self):
+        return self.processedPacketsCount
+
+    def getNumberOfQueuedPackets(self):
+        return self.sizeOfProcessingQueue
 
     def getNumberOfTxKiloBytes(self):
         return int(self.tx_kilo_bytes)
@@ -553,6 +563,9 @@ class ProcessorClass(object):
         # Rings (distance rings)
         # TODO: new feature: to make it look more like a radar
 
+        # acquire lock to protect use of node_dict[], etc.
+        self.__mutex.acquire()
+
         # for better visibility, same geolocations are spread in a CIRCLE
         for srcNode in self.node_dict.values():
             # show srcNode with that owner ?
@@ -938,6 +951,9 @@ class ProcessorClass(object):
                               html="".join(['<div style="font-size: 20pt">', info, '</div>']),
                           )
                           ).add_to(m)
+
+        # release lock
+        self.__mutex.release()
 
         # draw/save map
         try:
@@ -1645,11 +1661,10 @@ class ProcessorClass(object):
             self.needUpdate = True
         # end of common block for existent and new IP addresses
         #######################################################
-        if newConnection:
-            # plot map
-            if configuration.PLOT:
-                # update flag to update map periodically
-                self.needUpdate = True
+        # plot map
+        if configuration.PLOT and newConnection:
+            # update flag to update map periodically
+            self.needUpdate = True
         return
 
     def getDictOfNodes(self):
@@ -1723,15 +1738,19 @@ class ProcessorClass(object):
         # poll queue as fast as we can, but make small pauses to not consume too much CPU,
         # execute periodic tasks cooperatively
         while self.close_app == False:
+            sleep_before_next_queue_poll = True
             if self.currentCallbackQueueIsA[0] == False:
                 if self.packetQueueA.empty() == False:
                     try:
-                        packet = self.packetQueueA.get_nowait()
+                        # NOTE: we may use get_nowait() i.o. get(block_=True,..)
+                        #       packet = self.packetQueueA.get_nowait()
+                        packet = self.packetQueueA.get(block=True, timeout=configuration.POLL_PACKET_QUEUE_IN_SEC)
                         if packet != None:
                             self.processedPacketsCount = self.processedPacketsCount + 1
                             logging.debug("\nmain loop(A) pkt-nr = " + str(self.processedPacketsCount))
                             self.sizeOfProcessingQueue = self.packetQueueA.qsize()
                             self.processPacket(packet)
+                            sleep_before_next_queue_poll = False
                         if configuration.USE_DOUBLE_BUFFER == True:
                             if self.packetQueueA.empty() == True:
                                 # switch only if the other queue is NOT empty, otherwise continue with queueA
@@ -1742,12 +1761,15 @@ class ProcessorClass(object):
             else:
                 if self.packetQueueB.empty() == False:
                     try:
-                        packet = self.packetQueueB.get_nowait()
+                        # NOTE: we may use get_nowait() i.o. get(block_=True,..)
+                        #       packet = self.packetQueueB.get_nowait()
+                        packet = self.packetQueueB.get(block=True, timeout=configuration.POLL_PACKET_QUEUE_IN_SEC)
                         if packet != None:
                             self.processedPacketsCount = self.processedPacketsCount + 1
                             logging.debug("\nmain loop(B) pkt-nr = " + str(self.processedPacketsCount))
                             self.sizeOfProcessingQueue = self.packetQueueB.qsize()
                             self.processPacket(packet)
+                            sleep_before_next_queue_poll = False
                         if self.packetQueueB.empty() == True:
                             if configuration.USE_DOUBLE_BUFFER == True:
                                 # switch only if the other queue is NOT empty, otherwise continue with queueB
@@ -1767,10 +1789,12 @@ class ProcessorClass(object):
                 self.checkForHostsResolution()
                 self.checkKilledConnections()
                 self.checkActiveConnections()
-                if self.needUpdate:
-                    if configuration.PLOT:
-                        self.plotMap()
+                # plot map
+                if configuration.PLOT and self.needUpdate:
+                    self.plotMap()
+                sleep_before_next_queue_poll = False
             # we need to wait a little bit in order to not consume too much CPU
-            time.sleep(configuration.POLL_PACKET_QUEUE_IN_SEC)
+            if sleep_before_next_queue_poll:
+                time.sleep(configuration.POLL_PACKET_QUEUE_IN_SEC)
         # end of processingThread()
         logging.info("leaving processingThread..")
