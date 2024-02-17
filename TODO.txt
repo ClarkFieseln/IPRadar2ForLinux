@@ -55,7 +55,7 @@
 #      workaround for this case: copy .html file and open it separately
 # is memory then "garbage-collected"?
 # find out if we need to manually call gc and exactly when, or use another solution
-# e.g. avoid using big lists or dicts
+# e.g. avoid using big lists or dicts, use __mutex consistently.
 ###########################
 
 ###########################
