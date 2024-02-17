@@ -260,6 +260,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.statusRxBytes.setText(str(rxKiloBytes))
         self.statusRxTxBytes.setText(str(rxKiloBytes + txKiloBytes))
 
+        # statistics of packets (input, processed, queued)
+        in_packets = self.sniffer.getNumberOfInPackets()
+        processed_packets = self.sniffer.getNumberOfProcessedPackets()
+        self.statusInPackets.setText(str(in_packets))
+        self.statusProcessedPackets.setText(str(processed_packets))
+        # self.statusQueuedPackets.setText(str(self.sniffer.getNumberOfQueuedPackets()))
+        self.statusQueuedPackets.setText(str(in_packets - processed_packets))
+
     def threadCreateReportFile(self):
         while True:
             if self.create_report_file:

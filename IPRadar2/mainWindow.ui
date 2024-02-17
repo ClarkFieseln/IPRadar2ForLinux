@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1325</width>
-    <height>542</height>
+    <height>540</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -652,7 +652,7 @@
       <x>338</x>
       <y>23</y>
       <width>161</width>
-      <height>241</height>
+      <height>161</height>
      </rect>
     </property>
    </widget>
@@ -1448,6 +1448,97 @@
      <string>Show owners</string>
     </property>
    </widget>
+   <widget class="QGroupBox" name="groupBox_5">
+    <property name="geometry">
+     <rect>
+      <x>341</x>
+      <y>190</y>
+      <width>156</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Packets</string>
+    </property>
+    <widget class="QLabel" name="statusProcessedPackets">
+     <property name="geometry">
+      <rect>
+       <x>75</x>
+       <y>38</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelRXBytes_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>40</y>
+       <width>64</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Processed:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelTXBytes_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>19</y>
+       <width>41</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>In:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="statusInPackets">
+     <property name="geometry">
+      <rect>
+       <x>75</x>
+       <y>17</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="labelRXTXBytes_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>61</y>
+       <width>51</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Queued:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="statusQueuedPackets">
+     <property name="geometry">
+      <rect>
+       <x>75</x>
+       <y>59</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+    </widget>
+   </widget>
    <zorder>groupBox_7</zorder>
    <zorder>pbLiveCapture</zorder>
    <zorder>groupBoxShowGeneral</zorder>
@@ -1492,6 +1583,7 @@
    <zorder>pbTraceroute</zorder>
    <zorder>groupBoxPing</zorder>
    <zorder>label_6</zorder>
+   <zorder>groupBox_5</zorder>
   </widget>
  </widget>
  <customwidgets>
