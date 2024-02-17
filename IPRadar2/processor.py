@@ -1781,7 +1781,7 @@ class ProcessorClass(object):
             timeDiff = time.time() - startTime
             # periodic tasks
             ################
-            if timeDiff > configuration.CHECK_PERIOD_IN_SEC:
+            if timeDiff > configuration.CHECK_PERIOD_IN_SEC*4.0:
                 # start time
                 startTime = time.time()
                 logging.debug("Checking processing status..")
