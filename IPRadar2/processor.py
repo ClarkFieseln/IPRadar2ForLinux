@@ -1733,6 +1733,7 @@ class ProcessorClass(object):
             logging.debug("\nLog level X: switch to callback queue B")
         # start time
         startTime = time.time()
+        periods_for_plot = 0
         # main loop
         ###########
         # poll queue as fast as we can, but make small pauses to not consume too much CPU,
@@ -1742,8 +1743,6 @@ class ProcessorClass(object):
             if self.currentCallbackQueueIsA[0] == False:
                 if self.packetQueueA.empty() == False:
                     try:
-                        # NOTE: we may use get_nowait() i.o. get(block_=True,..)
-                        #       packet = self.packetQueueA.get_nowait()
                         packet = self.packetQueueA.get(block=True, timeout=configuration.POLL_PACKET_QUEUE_IN_SEC)
                         if packet != None:
                             self.processedPacketsCount = self.processedPacketsCount + 1
@@ -1761,8 +1760,6 @@ class ProcessorClass(object):
             else:
                 if self.packetQueueB.empty() == False:
                     try:
-                        # NOTE: we may use get_nowait() i.o. get(block_=True,..)
-                        #       packet = self.packetQueueB.get_nowait()
                         packet = self.packetQueueB.get(block=True, timeout=configuration.POLL_PACKET_QUEUE_IN_SEC)
                         if packet != None:
                             self.processedPacketsCount = self.processedPacketsCount + 1
@@ -1775,13 +1772,13 @@ class ProcessorClass(object):
                                 # switch only if the other queue is NOT empty, otherwise continue with queueB
                                 if self.packetQueueA.empty() == False:
                                     self.switchQueues()
-                    except Exception:  # as e:
+                    except Exception as e:
                         logging.exception("Exception in packet processing in Queue B: " + str(e))
             # currentTime
             timeDiff = time.time() - startTime
             # periodic tasks
             ################
-            if timeDiff > configuration.CHECK_PERIOD_IN_SEC*4.0:
+            if timeDiff > configuration.CHECK_PERIOD_IN_SEC:
                 # start time
                 startTime = time.time()
                 logging.debug("Checking processing status..")
@@ -1790,8 +1787,11 @@ class ProcessorClass(object):
                 self.checkKilledConnections()
                 self.checkActiveConnections()
                 # plot map
-                if configuration.PLOT and self.needUpdate:
-                    self.plotMap()
+                periods_for_plot = periods_for_plot + 1
+                if periods_for_plot == configuration.PLOT_PERIODS:
+                    periods_for_plot = 0
+                    if configuration.PLOT and self.needUpdate:
+                        self.plotMap()
                 sleep_before_next_queue_poll = False
             # we need to wait a little bit in order to not consume too much CPU
             if sleep_before_next_queue_poll:
