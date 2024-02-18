@@ -448,6 +448,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if self.pbOpenFile.text() == "exit":
             self.close()
         else:
+            self.pbLiveCapture.setEnabled(False)
+            self.pbOpenFile.setEnabled(False)
             fname = QFileDialog.getOpenFileName(
                 self, 'Open file', self.fpath, "Packet capture file (*.pcapng *.pcap *.cap)")
             if len(fname) != 0:
@@ -462,6 +464,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     self.comboBoxInterface.setEnabled(False)
                     self.pbOpenFile.setEnabled(True)
                     self.pbOpenFile.setText("open file")
+                else:
+                    self.pbLiveCapture.setEnabled(True)
+                    self.pbOpenFile.setEnabled(True)
+            else:
+                self.pbLiveCapture.setEnabled(True)
+                self.pbOpenFile.setEnabled(True)
 
     @pyqtSlot()
     def on_cbShowPopups_clicked(self):
