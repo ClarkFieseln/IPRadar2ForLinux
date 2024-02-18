@@ -101,6 +101,8 @@ USE_DOUBLE_BUFFER = False
 # to check: hosts resolutions, kill IPs, report updates, active connections
 # the GUI will be updated every (CHECK_PERIOD_IN_SEC * 2) seconds
 CHECK_PERIOD_IN_SEC = 0.5
+# plot after PLOT_PERIODS times CHECK_PERIOD_IN_SEC
+PLOT_PERIODS = 8
 
 # poll packet queue in seconds
 POLL_PACKET_QUEUE_IN_SEC = 0.0001
