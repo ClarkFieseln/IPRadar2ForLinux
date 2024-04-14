@@ -61,4 +61,7 @@ https://pypi.org/project/ipradar2
 install on the machine you want to use the tool with:
 pip install ipradar2
 
+check version with:
+pip show ipradar2
+
 now the command ipradar2 is available for use
