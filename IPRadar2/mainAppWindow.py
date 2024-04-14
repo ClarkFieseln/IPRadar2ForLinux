@@ -430,8 +430,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def on_pbLiveCapture_clicked(self):
         if self.pbLiveCapture.text() == "exit":
-            self.pbLiveCapture.setEnabled(False)
-            self.close()
+            if hf.show_popup_question("Stop capture and exit?") == QMessageBox.Yes:
+                self.pbLiveCapture.setEnabled(False)
+                self.close()
         else:
             self.pbOpenFile.setEnabled(False)
             self.comboBoxInterface.setEnabled(False)
@@ -446,7 +447,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def on_pbOpenFile_clicked(self):
         if self.pbOpenFile.text() == "exit":
-            self.close()
+            if hf.show_popup_question("Close file(s) and exit?") == QMessageBox.Yes:
+                self.close()
         else:
             self.pbLiveCapture.setEnabled(False)
             self.pbOpenFile.setEnabled(False)
@@ -465,10 +467,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     self.pbOpenFile.setEnabled(True)
                     self.pbOpenFile.setText("open file")
                 else:
-                    self.pbLiveCapture.setEnabled(True)
+                    if self.fpath == '/':
+                        self.pbLiveCapture.setEnabled(True)
                     self.pbOpenFile.setEnabled(True)
             else:
-                self.pbLiveCapture.setEnabled(True)
+                if self.fpath == '/':
+                    self.pbLiveCapture.setEnabled(True)
                 self.pbOpenFile.setEnabled(True)
 
     @pyqtSlot()
