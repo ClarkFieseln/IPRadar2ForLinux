@@ -40,7 +40,10 @@ import struct
 import os
 from getmac import get_mac_address
 import time
-# from memory_profiler import profile  # and use @profile in functions that may introduce memory leaks
+# to use the memory profiler add:
+#     from memory_profiler import profile
+# and use the decorator @profile in functions that may introduce memory leaks
+# you can also add this parameter to your configuration: -m memory_profiler
 
 
 
@@ -90,6 +93,11 @@ class GeodesicPolyLine(folium.PolyLine):
             super().__init__(locations, **kwargs)
 
 
+# helper function
+def is_power_of_two(n):
+    return (n & (n - 1)) == 0 and n != 0
+
+
 class ProcessorClass(object):
     # TODO: check workaround using sanitized_ip[]
     sanitized_ip = []
@@ -104,6 +112,8 @@ class ProcessorClass(object):
     sizeOfProcessingQueue = 0
     node_dict = {}
     location_dict = {}
+    offset_dict = {}
+    curr_offset_degrees = {}
     node_dict_gui = {}  # current dict of new/modified nodes to be shown/updated in GUI
     __mutex = Lock()  # for processing or accessing node_dict_gui[]
     __mutex_question = Lock()
@@ -1493,9 +1503,9 @@ class ProcessorClass(object):
                 mac_dst = ""
             # create nodes
             # cases:      src         dst         (exist)
-            # 1.a            x            x
-            # 1.b            x
-            # 2.a                         x
+            # 1.a         x            x
+            # 1.b         x
+            # 2.a                      x
             # 2.b
             ################
             case = ""
@@ -1525,7 +1535,8 @@ class ProcessorClass(object):
                 # add source in node_dict
                 source_node = NodeDataClass(self.currentNodeNumber, source, mac_src, response_src.latitude,
                                             response_src.longitude, response_src.latitude, response_src.longitude, 1,
-                                            response_src.country, pycountry.countries.get(alpha_2=response_src.country),
+                                            response_src.country,
+                                            pycountry.countries.get(alpha_2=response_src.country),
                                             response_src.region, response_src.city, host_src, True, "",
                                             host_src_resolved, ping=False, bad=False, killed=False, killed_process="",
                                             local=src_is_local, conn_established=False,
@@ -1559,40 +1570,68 @@ class ProcessorClass(object):
             if latlonsrc in self.location_dict:
                 if case == "2a" or case == "2b":
                     # increment count
-                    self.location_dict[latlonsrc] = self.location_dict[latlonsrc] + 1  # updates value
+                    self.location_dict[latlonsrc] = self.location_dict[latlonsrc] + 1
                     # update also  the source position in node_dict
                     self.node_dict[source].position = self.location_dict[latlonsrc]
                     # and update the drawing position
-                    # GeoLocationPhi = math.radians(360.0/self.node_dict[source].position)
-                    GeoLocationPhi = math.radians(6.28 * 360.0 / self.node_dict[source].position)
+                    GeoLocationPhi = math.radians(self.offset_dict[latlonsrc])
                     # set delta to CIRCLE in geo-location
                     latDelta = configuration.GeoLocationRadius * math.cos(GeoLocationPhi)
                     lonDelta = configuration.GeoLocationRadius * math.sin(GeoLocationPhi)
                     self.node_dict[source].lat_plot = self.node_dict[source].lat + latDelta
                     self.node_dict[source].lon_plot = self.node_dict[source].lon + lonDelta
+                    # update offset to evenly distribute nodes in a circle
+                    if self.node_dict[source].position % 4 == 0:
+                        if is_power_of_two(self.node_dict[source].position):
+                            self.offset_dict[latlonsrc] = (
+                                        self.offset_dict[latlonsrc] + 180.0 / self.node_dict[source].position) % 360.0
+                            self.curr_offset_degrees[latlonsrc] = 180.0 / self.node_dict[source].position
+                        else:
+                            self.offset_dict[latlonsrc] = (self.offset_dict[latlonsrc] + self.curr_offset_degrees[
+                                latlonsrc] * 2.0) % 360.0
+                    elif self.node_dict[source].position % 2 == 0:
+                        self.offset_dict[latlonsrc] = (self.offset_dict[latlonsrc] + 90.0) % 360.0
+                    else:
+                        self.offset_dict[latlonsrc] = (self.offset_dict[latlonsrc] + 180.0) % 360.0
             else:  # it must be case 2a or 2b
                 # add NEW location
-                self.location_dict[latlonsrc] = 1  # new value 1 in dict with key latlonsrc (its like an "append")
+                self.location_dict[latlonsrc] = 0  # new value 1 in dict with key latlonsrc (its like an "append")
+                self.offset_dict[latlonsrc] = 0.0
+                self.curr_offset_degrees[latlonsrc] = 90.0
                 # NOTE: self.node_dict[source].position already set to 1 by default
             # update module variable location_dict (dst)
             latlondst = "".join([str(self.node_dict[destination].lat), ",", str(self.node_dict[destination].lon)])
             if latlondst in self.location_dict:
                 if case == "1b" or case == "2b":
                     # increment count
-                    self.location_dict[latlondst] = self.location_dict[latlondst] + 1  # updates value
-                    # update also  the source position in node_dict
+                    self.location_dict[latlondst] = self.location_dict[latlondst] + 1
+                    # update also  the destination position in node_dict
                     self.node_dict[destination].position = self.location_dict[latlondst]
                     # and update the drawing position
-                    # GeoLocationPhi = math.radians(360.0/self.node_dict[destination].position)
-                    GeoLocationPhi = math.radians(6.28 * 360.0 / self.node_dict[destination].position)
+                    GeoLocationPhi = math.radians(self.offset_dict[latlondst])
                     # set delta to CIRCLE in geo-location
                     latDelta = configuration.GeoLocationRadius * math.cos(GeoLocationPhi)
                     lonDelta = configuration.GeoLocationRadius * math.sin(GeoLocationPhi)
                     self.node_dict[destination].lat_plot = self.node_dict[destination].lat + latDelta
                     self.node_dict[destination].lon_plot = self.node_dict[destination].lon + lonDelta
+                    # update offset to evenly distribute nodes in a circle
+                    if self.node_dict[destination].position % 4 == 0:
+                        if is_power_of_two(self.node_dict[destination].position):
+                            self.offset_dict[latlondst] = (
+                                        self.offset_dict[latlondst] + 180.0 / self.node_dict[destination].position)% 360.0
+                            self.curr_offset_degrees[latlondst] = 180.0 / self.node_dict[destination].position
+                        else:
+                            self.offset_dict[latlondst] = (self.offset_dict[latlondst] + self.curr_offset_degrees[
+                                latlondst] * 2.0) % 360.0
+                    elif self.node_dict[destination].position % 2 == 0:
+                        self.offset_dict[latlondst] = (self.offset_dict[latlondst] + 90.0) % 360.0
+                    else:
+                        self.offset_dict[latlondst] = (self.offset_dict[latlondst] + 180.0) % 360.0
             else:  # it must be case 1b or 2b
                 # add NEW location
-                self.location_dict[latlondst] = 1  # new value (its like an "append")
+                self.location_dict[latlondst] = 0  # new value (its like an "append")
+                self.offset_dict[latlondst] = 0.0
+                self.curr_offset_degrees[latlondst] = 90.0
                 # NOTE: self.node_dict[destination].position already set to 1 by default
             # src in black list / NOT in white list?
             if configuration.USE_WHITE_LIST:
