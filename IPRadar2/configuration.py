@@ -331,11 +331,3 @@ START_TIME = "YYYY_mm_dd_HH_MM_SS"
 # syntax here:
 # https://biot.com/capstats/bpf.html
 BPF_FILTER = ""
-
-
-
-
-
-
-
-
