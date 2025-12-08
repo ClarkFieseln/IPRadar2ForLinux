@@ -6,7 +6,8 @@ pycountry~=19.8.18
 PyQt5~=5.15.10
 pyshark~=0.6
 pythonping~=1.0.8
-Requests~=2.31.0
+Requests~=2.32.4
 
 folium~=0.15.1
 geographiclib~=2.0
+
