@@ -56,8 +56,6 @@ class pysharkSnifferClass:
         p1 = subprocess.Popen(cmdListInterfaces, shell=True, stdout=subprocess.PIPE)
         out, err = p1.communicate()
         if p1.returncode == 0:
-            p1.terminate()
-            p1.kill()
             out = out.splitlines()
             interfaceNr = 1
             for interface in out:
@@ -69,8 +67,6 @@ class pysharkSnifferClass:
                 logging.info("Interface {} = {}".format(interfaceNr, interfaceStr))
                 interfaceNr = interfaceNr + 1
         else:
-            p1.terminate()
-            p1.kill()
             logging.error("Error: could not get interfaces using " + configuration.CAPTURE_TOOL)
 
     def getInterfaces(self):
@@ -314,11 +310,11 @@ class pysharkSnifferClass:
                 return
             if self.currentCallbackQueueIsA[0] == True:
                 self.inputPacketsCount = self.inputPacketsCount + 1
-                logging.debug("\Log level X: ncallback (A), packet-in= " + str(self.inputPacketsCount))
+                logging.debug("Log level X: ncallback (A), packet-in= " + str(self.inputPacketsCount))
                 self.packetQueueA.put(packet)
             else:
                 self.inputPacketsCount = self.inputPacketsCount + 1
-                logging.debug("\Log level X: ncallback (B), packet-in = " + str(self.inputPacketsCount))
+                logging.debug("Log level X: ncallback (B), packet-in = " + str(self.inputPacketsCount))
                 self.packetQueueB.put(packet)
         # wait for processing thread to have read locations from .json file
         ###################################################################
