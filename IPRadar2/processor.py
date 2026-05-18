@@ -8,7 +8,7 @@ if "IPRadar2" in str(sys.argv):
     import hostResolver
     import badConnectionKiller
     import firewallManager
-    from node import NodeDataClass, DbIpCityResponse
+    from node import NodeDataClass
 else:
     from IPRadar2 import configuration
     from IPRadar2.helper_functions import find_2nd, log_info_layer, log_geolocations, playsound_block_false, Question
@@ -16,12 +16,11 @@ else:
     from IPRadar2 import hostResolver
     from IPRadar2 import badConnectionKiller
     from IPRadar2 import firewallManager
-    from IPRadar2.node import NodeDataClass, DbIpCityResponse
+    from IPRadar2.node import NodeDataClass
 import logging
 from time import gmtime, strftime, time
 import socket
 import requests
-from ip2geotools.databases.noncommercial import DbIpCity
 from geographiclib.geodesic import Geodesic
 import folium
 from folium.features import DivIcon
@@ -122,7 +121,7 @@ class ProcessorClass(object):
     public = "public IP address"
     localHost = "local host"
     publicHost = "public host"
-    response_public = "will be an object obtained by calling DbIpCity()"
+    response_public = "will be an object obtained by calling ip-api.com with query=IP-address"
     netmask = "24"
     net = ""
     locationsResolved = []
@@ -263,9 +262,8 @@ class ProcessorClass(object):
             self.randomIPList = []
             byte_message = bytes("Hi!", "utf-8")
             # generate NR_OF_RANDOM_IPS_TO_PING random IPs to ping by sending UPD-packets
-            for count in range(1, configuration.NR_OF_RANDOM_IPS_TO_PING):
-                randomIP = "".join([str(randint(0, 255)), ".", str(randint(0, 255)), ".", str(randint(0, 255)), ".",
-                                    str(randint(0, 255))])
+            for count in range (1, configuration.NR_OF_RANDOM_IPS_TO_PING):
+                randomIP = str(randint(0, 255))+ "."+str(randint(0, 255))+ "."+str(randint(0, 255))+ "."+str(randint(0, 255))
                 # append to list, we may need it later to send pings
                 self.randomIPList.append(randomIP)
                 # send UDP packet
@@ -273,7 +271,7 @@ class ProcessorClass(object):
                     opened_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     # NOTE: port 5005 is RTP (Real-time Transport Protocol - RFC 3551, RFC 4571)
                     opened_socket.sendto(byte_message, (randomIP, 5005))
-                    logging.info("".join(["UDP packet sent to random IP = ", randomIP]))
+                    logging.info("UDP packet sent to random IP = " + randomIP)
                 except Exception as e:
                     self.randomIPList.remove(randomIP)
                     logging.exception("Exception: processor.pingRandom(): Exception = " + str(e))
@@ -301,9 +299,9 @@ class ProcessorClass(object):
                         self.node_dict_gui[key] = self.node_dict[key]
                         # send request
                         self.pingResolverObject.putHostToPing(key)
-                        logging.info("".join(["Ping to random IP = ", key]))
+                        logging.info("Ping to random IP = " + key)
                     else:
-                        logging.info("".join(["Cause not yet in node_dict, do NOT ping to random IP = ", key]))
+                        logging.info("Cause not yet in node_dict, do NOT ping to random IP = " + key)
                 self.__mutex.release()
                 self.needUpdate = True
 
@@ -392,12 +390,11 @@ class ProcessorClass(object):
         if configuration.INTERFACE != "":
             try:
                 self.netmask = socket.inet_ntoa(fcntl.ioctl(socket.socket(socket.AF_INET, socket.SOCK_DGRAM),
-                                                            35099, struct.pack('256s', configuration.INTERFACE.encode(
-                        'utf-8')))[20:24])
+                            35099, struct.pack('256s', configuration.INTERFACE.encode('utf-8')))[20:24])
             except Exception as e:
                 logging.exception("Exception: " + str(e))
             self.local = self.get_local_ip()
-            self.net = ipaddress.IPv4Network("".join([self.local, "/", self.netmask]), False)
+            self.net = ipaddress.IPv4Network(self.local + "/" + self.netmask, False)
 
     def close(self):
         self.close_app = True
@@ -436,7 +433,10 @@ class ProcessorClass(object):
         i = 0
         # covert json "string" to dictionary format - index exception only works with "dictionary" format!
         for location in self.locationsResolved:
-            if location != "":
+            if location == "\n":
+                logging.error("Empty line in locationsResolved.json!")
+                exit()
+            elif location != "":
                 self.locationsResolved[i] = json.loads(location)
                 i = i + 1
         # MAC address of device
@@ -445,7 +445,7 @@ class ProcessorClass(object):
         # MAC address of router
         try:
             self.mac_router = get_mac_address(ip=configuration.ROUTER_IP)
-            logging.info("".join(["MAC of router = ", self.mac_router]))
+            logging.info("MAC of router = " + self.mac_router)
         except Exception as e:
             logging.exception("Trying to obtain MAC address for router with IP " + configuration.ROUTER_IP)
             logging.exception("Exception: " + str(e))
@@ -455,16 +455,15 @@ class ProcessorClass(object):
         if configuration.INTERFACE != "":
             try:
                 self.netmask = socket.inet_ntoa(fcntl.ioctl(socket.socket(socket.AF_INET, socket.SOCK_DGRAM),
-                                                            35099, struct.pack('256s', configuration.INTERFACE.encode(
-                        'utf-8')))[20:24])
+                        35099, struct.pack('256s', configuration.INTERFACE.encode('utf-8')))[20:24])
             except Exception as e:
                 logging.exception("Exception: " + str(e))
-            self.net = ipaddress.IPv4Network("".join([self.local, "/", self.netmask]), False)
+            self.net = ipaddress.IPv4Network(self.local + "/" + self.netmask, False)
         else:
             self.netmask = "24"
-            self.net = ipaddress.IPv4Network("".join([self.local, "/", self.netmask]), False)
+            self.net = ipaddress.IPv4Network(self.local + "/" + self.netmask, False)
         self.badConnectionKillerObject.setLocalIP(self.local)
-        logging.info("".join(["Local IP address = ", str(self.local)]))
+        logging.info("Local IP address = " + str(self.local))
         netlocalendpos = find_2nd(self.local, ".")
         self.netlocal = self.local[:netlocalendpos + 1]
         if configuration.PUBLIC_IP == "":
@@ -477,7 +476,7 @@ class ProcessorClass(object):
                     "processor.__init__(): Exception when calling requests.get('https://ident.me'): " + str(e))
         else:
             self.public = configuration.PUBLIC_IP
-        logging.info("".join(["Public IP address = ", self.public]))
+        logging.info("Public IP address = " + self.public)
         if self.public != "":
             try:
                 self.publicHost = socket.gethostbyaddr(self.public)
@@ -485,16 +484,21 @@ class ProcessorClass(object):
             except Exception as e:
                 self.publicHost = "(not found)"
                 logging.exception("processor.__init__(): Exception when calling gethostbyaddr(): " + str(e))
-            logging.info("".join(["Host name of Local IP address = ", self.localHost]))
-            logging.info("".join(["Host name of Public IP address = ", self.publicHost]))
-            # Note: we don't get location with DbIpCity.get() because we may appear e.g. in "another" city near us.
+            logging.info("Host name of Local IP address = " + self.localHost)
+            logging.info("Host name of Public IP address = " + self.publicHost)
+            # Note: we don't get location with REST API because we may appear e.g. in "another" city near us.
             #       Instead, we use configuration, which shall be more accurate:
-            self.response_public = DbIpCityResponse(
-                configuration.MY_CITY, configuration.MY_COUNTRY, configuration.MY_IP_ADDRESS, configuration.MY_LATITUDE,
-                configuration.MY_LONGITUDE, configuration.MY_REGION)
+            self.response_public = {
+                "city": configuration.MY_CITY,
+                "countryCode": configuration.MY_COUNTRY,
+                "query": configuration.MY_IP_ADDRESS,
+                "lat": configuration.MY_LATITUDE,
+                "lon": configuration.MY_LONGITUDE,
+                "regionName": configuration.MY_REGION
+            }
             # overwrite IP, even if it is actually somewhere else
-            self.response_public.ip_address = self.public
-            logging.info("".join(["Location:\n", str(self.response_public)]))
+            self.response_public['query'] =  self.public
+            logging.info("Location:\n" + str(self.response_public))
 
     # plot the map
     # Each time plotMap() is called we create NEW structures (latitude_local[]..) to draw.
@@ -653,7 +657,7 @@ class ProcessorClass(object):
                             icon_type = 'stop'
                         else:
                             icon_type = ''
-                        tooltip_text = "".join([srcNode.host, ", tx=", str(srcNode.tx), ", rx=", str(srcNode.rx)])
+                        tooltip_text = srcNode.host + ", tx="+str(srcNode.tx) + ", rx="+str(srcNode.rx)
                         # marker
                         if SHOW_NODES:
                             # selected?
@@ -664,10 +668,9 @@ class ProcessorClass(object):
                                                   icon_size=(45, 55),
                                                   icon_anchor=(22, 50))).add_to(m)
                             folium.Marker([srcNode.lat_plot, srcNode.lon_plot],
-                                          tooltip=tooltip_text,
-                                          popup=folium.Popup("".join(["<h4>", tooltip_text, "</h4>"]),
-                                                             show=SHOW_POPUPS),
-                                          icon=folium.Icon(icon=icon_type, color=node_color)).add_to(m)
+                                            tooltip=tooltip_text,
+                                            popup=folium.Popup("<h4>" + tooltip_text + "</h4>", show=SHOW_POPUPS),
+                                            icon=folium.Icon(icon=icon_type, color=node_color)).add_to(m)
                         # label
                         if SHOW_LABELS:
                             if srcNode.ip == self.selected_ip:
@@ -677,8 +680,7 @@ class ProcessorClass(object):
                             folium.Marker(location=[srcNode.lat_plot, srcNode.lon_plot],
                                           icon=DivIcon(
                                               icon_anchor=(-5, 5),
-                                              html="".join(['<div style="font-size: ', label_size, 'pt">', srcNode.ip,
-                                                            '</div>']),
+                                              html='<div style="font-size: ' + label_size + 'pt">' + srcNode.ip + '</div>',
                                           )
                                           ).add_to(m)
                 # this is a good guy?
@@ -848,7 +850,7 @@ class ProcessorClass(object):
                                     icon_type = 'stop'
                                 else:
                                     icon_type = ''
-                            tooltip_text = "".join([srcNode.host, ", tx=", str(srcNode.tx), ", rx=", str(srcNode.rx)])
+                            tooltip_text = srcNode.host + ", tx=" + str(srcNode.tx) + ", rx=" + str(srcNode.rx)
                             # marker
                             if SHOW_NODES:
                                 # selected?
@@ -860,8 +862,7 @@ class ProcessorClass(object):
                                                       icon_anchor=(22, 50))).add_to(m)
                                 folium.Marker([srcNode.lat_plot, srcNode.lon_plot],
                                               tooltip=tooltip_text,
-                                              popup=folium.Popup("".join(["<h4>", tooltip_text, "</h4>"]),
-                                                                 show=SHOW_POPUPS),
+                                              popup=folium.Popup("<h4>" + tooltip_text + "</h4>", show=SHOW_POPUPS),
                                               icon=folium.Icon(icon=icon_type, color=node_color)).add_to(m)
                             # label
                             if SHOW_LABELS:
@@ -1351,7 +1352,7 @@ class ProcessorClass(object):
             # resolve geolocation for source address
             geoLocationNotResolved = True
             # check if src location already exists
-            # TODO: check if this takes even more time than just calling DbIpCityResponse().
+            # TODO: check if this takes even more time than just calling ip-api.com.
             #       That will depend on the size of the file locationsResolved.json and the nr. of locations we need to resolve in a specified time period.
             if src_is_local:
                 # Note: local IP, we store it neither in self.locationsResolved nor in locationsResolved.json
@@ -1360,42 +1361,52 @@ class ProcessorClass(object):
             else:
                 for location in self.locationsResolved:
                     if location != "":
-                        if location["ip_address"] == source:
-                            response_src = DbIpCityResponse(
-                                location["city"], location["country"], location["ip_address"], location["latitude"],
-                                location["longitude"], location["region"])
+                        if location["query"] == source:
+                            response_src = {
+                                "city": location["city"],
+                                "countryCode": location["countryCode"],
+                                "query": source,
+                                "lat": location["lat"],
+                                "lon": location["lon"],
+                                "regionName": location["regionName"]
+                            }
                             geoLocationNotResolved = False
                             break
             # source already resolved?
             if geoLocationNotResolved:
                 try:
-                    response_src = DbIpCity.get(source, api_key='free')
-                    # WORKAROUND:
-                    # sometimes DbIpCity returns lat, lon = None, None
-                    if response_src.latitude == None or response_src.longitude == None:
-                        logging.error("Error: DbIpCity.get(source) lat, lon = None, None")
+                    response_src_req = requests.get(f"http://ip-api.com/json/{source}")
+                    response_src = response_src_req.json()
+                    # catch further errors
+                    if response_src is None:
+                        logging.exception("processor.py.processPacket():Exception: ip-api.com - source request")
+                        return
+                    # leave commented for now - TODO: remove in future
+                    # if response_src["status"] != "success":
+                    #    logging.exception("processor.py.processPacket():Exception: ip-api.com - source request")
+                    #    return
+                    # just in case
+                    if response_src["lat"] is None or response_src["lon"] is None:
+                        logging.error("ip-api.com/json source lat, lon = None, None")
                         # we set a default lat lon
-                        response_src.latitude = 0.1
-                        response_src.longitude = 0.1
+                        response_src['lat'] = 0.1
+                        response_src['lon'] = 0.1
                     else:
                         geoLocationNotResolved = False
                 except Exception as e:
-                    logging.exception("processor.py.processPacket():Exception: DbIpCity.get(source) = " + str(e))
+                    logging.exception("processor.py.processPacket():Exception: ip-api.com - source request = " + str(e))
                     return
-                # catch further errors
-                if response_src == None:
-                    return
-                # convert new location to json format
-                js = response_src.to_json()
+                # just an alias, no memory overhead
+                js = response_src
                 # append to file only if really resolved
                 if geoLocationNotResolved == False:
-                    locationsFile = open("IPRadar2/Config/locationsResolved.json", "a", encoding="utf-8")
-                    locationsFile.write(js)
+                    locationsFile = open("IPRadar2/Config/locationsResolved.json",  "a", encoding="utf-8")
+                    locationsFile.write(json.dumps(js)) # (js)
                     locationsFile.write("\n")
                     locationsFile.close()
                 # store in memory
-                js = json.loads(response_src.to_json())
                 self.locationsResolved.append(js)
+
             # resolve geolocation for destination address
             geoLocationNotResolved = True
             # check if dst location already exists
@@ -1406,43 +1417,51 @@ class ProcessorClass(object):
             else:
                 for location in self.locationsResolved:
                     if location != "":
-                        if location["ip_address"] == destination:
-                            response_dst = DbIpCityResponse(
-                                location["city"], location["country"], location["ip_address"], location["latitude"],
-                                location["longitude"], location["region"])
+                        if location["query"] == destination:
+                            response_dst = {
+                                "city": location["city"],
+                                "countryCode": location["countryCode"],
+                                "query": destination,
+                                "lat": location["lat"],
+                                "lon": location["lon"],
+                                "regionName": location["regionName"]
+                            }
                             geoLocationNotResolved = False
                             break
             # destination already resolved?
             if geoLocationNotResolved:
                 try:
-                    response_dst = DbIpCity.get(destination, api_key='free')
-                    # WORKARDOUND:
-                    # sometimes DbIpCity returns lat, lon = None, None
-                    if response_dst.latitude == None or response_dst.longitude == None:
-                        logging.warning("".join(
-                            ["Warning: DbIpCity.get(", destination, ") lat, Lon = None. Assigning default values."]))
+                    response_dst_req = requests.get(f"http://ip-api.com/json/{destination}")
+                    response_dst = response_dst_req.json()
+                    if response_dst is None:
+                        logging.exception("processor.py.processPacket():Exception: ip-api.com - destination request")
+                        return
+                    # leave commented for now - TODO: remove in future
+                    # if response_dst["status"] != "success":
+                    #    logging.exception("processor.py.processPacket():Exception: ip-api.com - destination request")
+                    #    return
+                    # just in case
+                    if response_dst["lat"] is None or response_dst["lon"] is None:
+                        logging.error("ip-api.com/json destination lat, lon = None, None")
                         # we set a default lat lon
-                        response_dst.latitude = 0.1
-                        response_dst.longitude = 0.1
+                        response_dst['lat'] = 0.1
+                        response_dst['lon'] = 0.1
                     else:
                         geoLocationNotResolved = False
                 except Exception as e:
-                    logging.exception("processor.py.processPacket():Exception: DbIpCity.get(destination) = " + str(e))
+                    logging.exception("processor.py.processPacket():Exception: ip-api.com - destination request = " + str(e))
                     return
-                # catch further errors
-                if response_dst == None:
-                    return
-                # convert new location to json format
-                js = response_dst.to_json()
+                # just an alias, no memory overhead
+                js = response_dst
                 # append to file only if really resolved
                 if geoLocationNotResolved == False:
-                    locationsFile = open("IPRadar2/Config/locationsResolved.json", "a", encoding="utf-8")
-                    locationsFile.write(js)
+                    locationsFile = open("IPRadar2/Config/locationsResolved.json",  "a", encoding="utf-8")
+                    locationsFile.write(json.dumps(js)) # (js)
                     locationsFile.write("\n")
                     locationsFile.close()
                 # store in memory
-                js = json.loads(response_dst.to_json())
                 self.locationsResolved.append(js)
+
             # auto ping?
             if self.pingAuto:
                 # we always ping new host as a source:
@@ -1516,51 +1535,31 @@ class ProcessorClass(object):
                 if destination not in self.node_dict:
                     # add destination in node_dict (1.b)
                     case = "1b"
-                    dest_node = NodeDataClass(self.currentNodeNumber, destination, mac_dst, response_dst.latitude,
-                                              response_dst.longitude, response_dst.latitude, response_dst.longitude, 1,
-                                              response_dst.country,
-                                              pycountry.countries.get(alpha_2=response_dst.country),
-                                              response_dst.region, response_dst.city, host_dst, True, "",
-                                              host_dst_resolved, ping=False, bad=False, killed=False, killed_process="",
-                                              local=dst_is_local, conn_established=False,
-                                              tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()),
-                                              time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[],
-                                              comm_partner_list_killed=[])
-                    self.node_dict[
-                        destination] = dest_node  # new value in dict with key destination (its like an "append")
+                    dest_node = NodeDataClass(self.currentNodeNumber, destination, mac_dst, response_dst['lat'],  response_dst['lon'],  response_dst['lat'],  response_dst['lon'], 1,
+                                        response_dst['countryCode'], pycountry.countries.get(alpha_2=response_dst['countryCode']),
+                                        response_dst['regionName'], response_dst['city'],  host_dst, True, "", host_dst_resolved, ping=False, bad=False, killed=False, killed_process="", local=dst_is_local, conn_established=False,
+                                        tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()), time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[], comm_partner_list_killed=[])
+                    self.node_dict[destination] = dest_node # new value in dict with key destination (its like an "append")
                     self.currentNodeNumber = self.currentNodeNumber + 1
                 else:
                     case = "1a"
             else:
                 # add source in node_dict
-                source_node = NodeDataClass(self.currentNodeNumber, source, mac_src, response_src.latitude,
-                                            response_src.longitude, response_src.latitude, response_src.longitude, 1,
-                                            response_src.country,
-                                            pycountry.countries.get(alpha_2=response_src.country),
-                                            response_src.region, response_src.city, host_src, True, "",
-                                            host_src_resolved, ping=False, bad=False, killed=False, killed_process="",
-                                            local=src_is_local, conn_established=False,
-                                            tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()),
-                                            time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[destination],
-                                            comm_partner_list_killed=[])
-                self.node_dict[source] = source_node  # new value in dict with key source (its like an "append")
+                source_node = NodeDataClass(self.currentNodeNumber, source, mac_src, response_src['lat'],  response_src['lon'],  response_src['lat'],  response_src['lon'],  1,
+                                        response_src['countryCode'], pycountry.countries.get(alpha_2=response_src['countryCode']),
+                                        response_src['regionName'], response_src['city'],  host_src, True, "",  host_src_resolved, ping=False, bad=False, killed=False, killed_process="", local=src_is_local, conn_established=False,
+                                        tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()), time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[destination], comm_partner_list_killed=[])
+                self.node_dict[source] = source_node # new value in dict with key source (its like an "append")
                 self.currentNodeNumber = self.currentNodeNumber + 1
                 # no source, check if destination exists
                 if destination not in self.node_dict:
                     # add destination in node_dict (2.b)
                     case = "2b"
-                    dest_node = NodeDataClass(self.currentNodeNumber, destination, mac_dst, response_dst.latitude,
-                                              response_dst.longitude, response_dst.latitude, response_dst.longitude, 1,
-                                              response_dst.country,
-                                              pycountry.countries.get(alpha_2=response_dst.country),
-                                              response_dst.region, response_dst.city, host_dst, True, "",
-                                              host_dst_resolved, ping=False, bad=False, killed=False, killed_process="",
-                                              local=dst_is_local, conn_established=False,
-                                              tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()),
-                                              time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[],
-                                              comm_partner_list_killed=[])
-                    self.node_dict[
-                        destination] = dest_node  # new value in dict with key destination (its like an "append")
+                    dest_node = NodeDataClass(self.currentNodeNumber, destination, mac_dst, response_dst['lat'],  response_dst['lon'],  response_dst['lat'],  response_dst['lon'],  1,
+                                        response_dst['countryCode'], pycountry.countries.get(alpha_2=response_dst['countryCode']),
+                                        response_dst['regionName'], response_dst['city'],  host_dst, True, "",  host_dst_resolved, ping=False, bad=False, killed=False, killed_process="", local=dst_is_local, conn_established=False,
+                                        tx=0, rx=0, tx_kB=0, rx_kB=0, date=strftime("%Y.%m.%d", gmtime()), time=strftime("%H:%M:%S", gmtime()), comm_partner_list=[], comm_partner_list_killed=[])
+                    self.node_dict[destination] = dest_node # new value in dict with key destination (its like an "append")
                     self.currentNodeNumber = self.currentNodeNumber + 1
                 else:
                     case = "2a"
@@ -1635,44 +1634,32 @@ class ProcessorClass(object):
                 # NOTE: self.node_dict[destination].position already set to 1 by default
             # src in black list / NOT in white list?
             if configuration.USE_WHITE_LIST:
-                badIP = ((response_src.country not in configuration.WhiteList) and (
-                            response_src.city not in configuration.WhiteListCity)) or (
-                                    response_src.city in configuration.BlackListCity)
+                badIP = ((response_src['countryCode'] not in configuration.WhiteList) and (response_src['city'] not in configuration.WhiteListCity)) or (response_src['city'] in configuration.BlackListCity)
             else:
-                badIP = ((response_src.country in configuration.BlackList) and (
-                            response_src.city not in configuration.WhiteListCity)) or (
-                                    response_src.city in configuration.BlackListCity)
+                badIP = ((response_src['countryCode'] in configuration.BlackList) and (response_src['city'] not in configuration.WhiteListCity)) or (response_src['city'] in configuration.BlackListCity)
             if badIP:
                 # TODO: check this workaround - why do we need to check against sanitized_ip?
                 if source not in self.sanitized_ip:
                     self.node_dict[source].bad = True
-                    logging.info(
-                        "\n\"ALARM! detected PRESUMABLY illegal IP {0} in country {1}, city {2} but owner not yet known.\"".format(
-                            source, response_src.country, response_src.city))
+                    logging.info("\n\"ALARM! detected PRESUMABLY illegal IP {0} in country {1}, city {2} but owner not yet known.\"".format(source,  response_src['countryCode'],  response_src['city']))
                     # we delay putIPToKill(), adding rule to firewall and playing sound because it may be a whilte-listed onwer and we don't yet know the owner..
             # dst in black list or NOT in white list?
             if configuration.USE_WHITE_LIST:
-                badIP = ((response_dst.country not in configuration.WhiteList) and (
-                            response_dst.city not in configuration.WhiteListCity)) or (
-                                    response_dst.city in configuration.BlackListCity)
+                badIP = ((response_dst['countryCode'] not in configuration.WhiteList) and (response_dst['city'] not in configuration.WhiteListCity)) or (response_dst['city'] in configuration.BlackListCity)
             else:
-                badIP = ((response_dst.country in configuration.BlackList) and (
-                            response_dst.city not in configuration.WhiteListCity)) or (
-                                    response_dst.city in configuration.BlackListCity)
+                badIP = ((response_dst['countryCode'] in configuration.BlackList) and (response_dst['city'] not in configuration.WhiteListCity)) or (response_dst['city'] in configuration.BlackListCity)
             if badIP:
                 # TODO: check this workaround - why do we need to check against sanitized_ip?
                 if destination not in self.sanitized_ip:
                     self.node_dict[destination].bad = True
-                    logging.info(
-                        "\n\"ALARM! detected PRESUMABLY illegal IP {0} in country {1}, city {2} but owner not yet known.\"".format(
-                            destination, response_dst.country, response_dst.city))
+                    logging.info("\n\"ALARM! detected PRESUMABLY illegal IP {0} in country {1}, city {2} but owner not yet known.\"".format(destination,  response_dst['countryCode'],  response_dst['city']))
                     # we delay putIPToKill(), adding rule to firewall and playing sound because it may be a whilte-listed onwer and we don't yet know the owner..
             # print geolocations in CONSOLE
             log_geolocations(response_src, response_dst, self.node_dict[source].host, self.node_dict[destination].host)
             # add new IP to GUI-List
             # eventually both, source and destination have been created or modified
             self.__mutex.acquire()
-            self.node_dict_gui[source] = self.node_dict[source]
+            self.node_dict_gui[source] =  self.node_dict[source]
             self.node_dict_gui[destination] = self.node_dict[destination]
             self.__mutex.release()
             # plot map is handled in block outside "if newConnection"
