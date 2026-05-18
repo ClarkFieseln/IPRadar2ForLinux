@@ -12,7 +12,7 @@ HERE = pathlib.Path(__file__).parent
 # The text of the README file
 README = (HERE / "README.md").read_text()
 
-__version__ = "0.0.9"
+__version__ = "0.1"
 
 # This call to setup() does all the work
 setup(
@@ -56,7 +56,7 @@ setup(
         ('IPRadar2/Sounds', [])
     ],
     include_package_data=True,
-    install_requires=['getmac>=0.8.2', 'ip2geotools>=0.1.6', 'playsound~=1.2.2', 'psutil>=5.9.8', 'pycountry>=19.8.18', 'PyQt5>=5.15.10', 'pyshark>=0.6', 'pythonping>=1.0.8', 'Requests~=2.32.4', 'folium>=0.15.1', 'geographiclib>=2.0'],
+    install_requires=['getmac', 'playsound', 'psutil', 'pycountry', 'sc-pylibs', 'PyQt5', 'pyshark', 'pythonping', 'Requests', 'folium', 'geographiclib', 'pygobject'],
     dependency_links=['https://github.com/KimiNewt/pyshark'],
     keywords=['cybersecurity','cyber security','cyber-security','security','IDS','IDPS','NW-IDS','NW IDS','network IDS','network-IDS','pyqt5','open streetmap','open-streetmap','network-analysis','firewall', 'pyshark', 'tshark', 'pyqt'],
     entry_points={
