@@ -75,9 +75,13 @@ python3 -m pip install -e . --config-settings editable_mode=compat
 # rm -rf build dist *.egg-info
 python3 -m build
 twine check dist/*
+
+TODO: check this...seems not to work
+###
 cd ipradar2
 # test if the local installation works:
 ipradar2
+###
 
 # ------------------------------------------------------------------------------
 
