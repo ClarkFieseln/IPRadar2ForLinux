@@ -63,13 +63,11 @@ class BadConnectionKillerClass(object):
     def __killAll(self):
         try:
             logging.info("Checking connected IPs = ")
-            command = "".join(["netstat -anolp 2>/dev/null | grep -v unix | grep \"" , configuration.CONN_ESTABLISHED_STR , "\" | grep \""])
-            command = "".join([command , self.local , "\""])
+            command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+            command = command + self.local + "\""
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             out, err = p1.communicate()
             if p1.returncode == 0:
-                p1.terminate()
-                p1.kill()
                 out = out.decode('utf-8')
                 out = out.splitlines()
                 # TODO: improvement
@@ -102,19 +100,16 @@ class BadConnectionKillerClass(object):
                                 logging.exception("Could not kill PID = " + str(pid))
                             if IP not in self.__ipKilledList:
                                 self.__ipKilledList[IP] = pname
-                            message = "".join(["Killed process " , pname , " with PID = " , pid , " connected to " , IP])
-                            self.__ipKilledListComplete.append("".join([pname , " (" , IP , ")"]))
+                            message = "Killed process " + pname + " with PID = " + pid + " connected to " + IP
+                            self.__ipKilledListComplete.append(pname + " (" + IP + ")")
                             if configuration.SOUND and not configuration.ONLY_ALARMS_SOUND:
                                 playsound_block_false('IPRadar2/Sounds/smb_bowserfalls.mp3')
                         else:
-                            message = "".join(["We do NOT kill " , pname , " with PID = " , pid , " connected to " , IP])
+                            message = "We do NOT kill " + pname + " with PID = " + pid + " connected to " + IP
                         logging.info(message)
                     else:
-                        message = "".join(["Did NOT kill process " , pname , " with PID = " , pid , " holding a connection with IP = " , IP , " because it is in the white-list!"])
+                        message = "Did NOT kill process " + pname + " with PID = " + pid + " holding a connection with IP = " + IP + " because it is in the white-list!"
                         logging.info(message)
-            else:
-                p1.terminate()
-                p1.kill()
                 logging.error("Error: could not execute netstat correctly!")
         except Exception as e:  # avoid catching exceptions like SystemExit, KeyboardInterrupt, etc.
             logging.exception("__killAll(): Exception: " + str(e))
@@ -126,13 +121,14 @@ class BadConnectionKillerClass(object):
         try:
             # __ipToKillList has list of IPs to kill
             for badIP in self.__ipToKillList:
-                logging.info("".join(["Checking bad IP = " , str(badIP)]))
-                command = "".join(["netstat -anolp 2>/dev/null | grep -v unix | grep \"" , configuration.CONN_ESTABLISHED_STR , "\" | grep \"", self.local , "\"", " | grep \"", badIP , "\""])
+                logging.info("Checking bad IP = " + str(badIP))
+                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+                command = command + self.local + "\""
+                command = command + " | grep \""
+                command = command + badIP + "\""
                 p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
                 out, err = p1.communicate()
                 if p1.returncode == 0:
-                    p1.terminate()
-                    p1.kill()
                     out = out.decode('utf-8')
                     out = out.splitlines()
                     for netstatLine in out:
@@ -152,19 +148,17 @@ class BadConnectionKillerClass(object):
                                 p.kill()
                                 if badIP not in self.__ipKilledList:
                                     self.__ipKilledList[badIP] = pname
-                                message = "".join(["Killed process " , pname , " with PID = " , pid , " holding a connection with bad IP = " , badIP])
+                                message = "Killed process " + pname + " with PID = " + pid + " holding a connection with bad IP = " + badIP
                                 logging.info(message)
-                                self.__ipKilledListComplete.append("".join([pname , " (" , badIP , ")"]))
+                                self.__ipKilledListComplete.append(pname + " (" + badIP + ")")
                                 if configuration.SOUND and not configuration.ONLY_ALARMS_SOUND:
                                     playsound_block_false('IPRadar2/Sounds/smb_bowserfalls.mp3')
                             except:
                                 logging.exception("Could NOT kill PID = " + str(pid))
                         else:
-                            message = "".join(["Did NOT kill process " , pname , " with PID = " , pid , " holding a connection with bad IP = " , badIP , " because it is in the white-list!"])
+                            message = "Did NOT kill process " + pname + " with PID = " + pid + " holding a connection with bad IP = " + badIP + " because it is in the white-list!"
                             logging.info(message)
                 else:
-                    p1.terminate()
-                    p1.kill()
                     logging.error("Error: could not execute netstat correctly while trying to kill Bad IP = " + badIP)
                 # maybe we killed the PID or it was already killed and got an error,
                 # in any case we remove it from the request list
@@ -185,16 +179,16 @@ class BadConnectionKillerClass(object):
             # now check for connections which are currently established
             logging.debug("Checking active connections..")
             if os.geteuid() == 0:
-                command = "".join(["netstat -anolp 2>/dev/null | grep -v unix | grep \"" , configuration.CONN_ESTABLISHED_STR , "\" | grep \"" , self.local , "\""])
+                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+                command = command + self.local + "\""
             else:
                 # NOTE: with 2>/dev/null we throw away the std error,
                 #       otherwise we constantly get errors in output
-                command = "".join(["netstat -anolp 2>/dev/null | grep -v unix | grep \"" , configuration.CONN_ESTABLISHED_STR , "\" | grep \"" , self.local , "\""])
+                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+                command = command + self.local + "\""
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             out, err = p1.communicate()
             if p1.returncode == 0:
-                p1.terminate()
-                p1.kill()
                 out = out.decode('utf-8')
                 out = out.splitlines()
                 for netstatLine in out:
@@ -208,12 +202,10 @@ class BadConnectionKillerClass(object):
                 new_conn = [x for x in self.__ipConnectedList if x not in ipConnectedList_old]
                 conn_rem = [x for x in ipConnectedList_old if x not in self.__ipConnectedList]
                 if new_conn:
-                    logging.info("".join(["New connection(s): " , str(new_conn)]))
+                    logging.info("New connection(s): " + str(new_conn))
                 if conn_rem:
-                    logging.info("".join(["Removed connection(s): " , str(conn_rem)]))
+                    logging.info("Removed connection(s): " + str(conn_rem))
             else:
-                p1.terminate()
-                p1.kill()
                 logging.error("Error: could not execute netstat correctly to find active connections with command = " + str(command))
             if configuration.SOUND and not configuration.ONLY_ALARMS_SOUND:
                 playsound_block_false('IPRadar2/Sounds/smb_stomp.mp3')
@@ -338,13 +330,14 @@ class BadConnectionKillerClass(object):
         self.__killAll()
 
     def killIP(self, ip):
-        logging.info("".join(["Kill requested IP = " , ip]))
-        command = "".join(["netstat -anolp 2>/dev/null | grep -v unix | grep \"" , configuration.CONN_ESTABLISHED_STR , "\" | grep \"" , self.local , "\"" , " | grep \"" , ip , "\""])
+        logging.info("Kill requested IP = " + ip)
+        command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+        command = command + self.local + "\""
+        command = command + " | grep \""
+        command = command + ip + "\""
         p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         out, err = p1.communicate()
         if p1.returncode == 0:
-            p1.terminate()
-            p1.kill()
             out = out.decode('utf-8')
             out = out.splitlines()
             for netstatLine in out:
@@ -373,10 +366,9 @@ class BadConnectionKillerClass(object):
                         except:
                             logging.exception("Could NOT kill PID = " + str(pid))
                     else:
-                        logging.info("".join(["Did NOT kill process " , pname , " with PID = " , pid , " holding a connection with passed IP = " , ip , " because it is in the white-list!"]))
+                        logging.info("Did NOT kill process " + pname + " with PID = " + pid + " holding a connection with passed IP = " + ip + " because it is in the white-list!")
                 except:
                     logging.exception("Could not get PID from process to kill.")
 
     def getNumberOfConnections(self):
         return self.numberOfConnections
-        
