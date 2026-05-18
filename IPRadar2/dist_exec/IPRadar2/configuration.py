@@ -1,5 +1,5 @@
 #######################################
-# this file contains a super-set of configuration settings 
+# this file contains a super-set of configuration settings
 # some of which are also defined in config.ini
 # values in config.ini will override at startup the values given here!
 #######################################
@@ -101,8 +101,6 @@ USE_DOUBLE_BUFFER = False
 # to check: hosts resolutions, kill IPs, report updates, active connections
 # the GUI will be updated every (CHECK_PERIOD_IN_SEC * 2) seconds
 CHECK_PERIOD_IN_SEC = 0.5
-# plot after PLOT_PERIODS times CHECK_PERIOD_IN_SEC
-PLOT_PERIODS = 8
 
 # poll packet queue in seconds
 POLL_PACKET_QUEUE_IN_SEC = 0.0001
@@ -161,12 +159,12 @@ NODE_MY_DEVICE_COLOR_CON = "darkpurple"
 NODE_ROUTER_COLOR_CON = "beige"
 NODE_DEFAULT_COLOR_CON = "darkblue"
 NODE_KILLED_COLOR_CON = "pink"
-CON_GOOD_COLOR = "lightgreen" # "cornflowerblue"
+CON_GOOD_COLOR = "lightgreen" # "green" # "cornflowerblue"
 CON_UNKNOWN_COLOR = "orange"
 CON_BAD_COLOR = "red"
 CON_DEFAULT_COLOR = "blue"
 CON_KILLED_COLOR = "gray"
-CON_GOOD_COLOR_CON = "green" # "darkgreen" # "cornflowerblue"
+CON_GOOD_COLOR_CON = "green" # "darkgreen" # "darkblue"
 CON_UNKNOWN_COLOR_CON = "orange"
 CON_BAD_COLOR_CON = "darkred"
 CON_DEFAULT_COLOR_CON = "darkblue"
@@ -232,7 +230,7 @@ ONLY_ALARMS_SOUND = True
 USE_WHITE_LIST = True # if False then we'll use the Blacklist
 
 # Black List
-# see: https://dev.maxmind.com/geoip/legacy/codes/iso3166/
+# see: see: https://www.iso.org/obp/ui/#search
 BlackList = { # it's in fact a dictionary
 "A1":"Anonymous Proxy", 
 "A2":"Satellite Provider", 
@@ -242,13 +240,14 @@ BlackList = { # it's in fact a dictionary
 }
 
 # EXCLUSIVE White List
-# see: https://dev.maxmind.com/geoip/legacy/codes/iso3166/
+# see: see: https://www.iso.org/obp/ui/#search
 # NOTE: ZZ, None allows multicast connections
 WhiteList = { # it's in fact a dictionary
 "ZZ":"None",
 "BE":"Belgium", 
 "CH":"Switzerland", 
-"DE":"Germany", 
+"DE":"Germany",
+"CA":"Canada",
 "GB":"United Kingdom", 
 "HK":"Hong Kong",
 "IE":"Ireland", 
@@ -277,7 +276,7 @@ WhiteListNotKill = [
 # Black List for BAD owner
 # Rule: if BlackListOwner AND NOT WhiteListOwner
 # NOT IDENTIFIED owner names will be marked as BAD!
-########################################
+##############################
 BlackListOwner = [
 "CEDIA", # uni Ecuador (mirror for Linux servers)
 "Hostway LLC",
