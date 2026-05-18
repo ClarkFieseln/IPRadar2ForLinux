@@ -1,5 +1,5 @@
 #######################################################################
-# this file was obtained inside IPRadar2ForLinux_venv at the same level of original project path with:
+# this file was obtained inside IPRadar2ForLinux_venv inside folder IPRadar2 of the original project path with:
 # pipreqs --force ./ --ignore backups --mode compat
 # or
 # python ../IPRadar2ForLinux/updateRequirements.py
