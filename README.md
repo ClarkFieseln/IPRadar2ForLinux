@@ -1,7 +1,31 @@
 # IPRadar2 for Linux
 
-## Quickstart
-    pip install ipradar2
+## Installation
+- Install system dependencies:
+  ```bash
+  sudo apt update
+  sudo apt install -y python3-dev
+  sudo apt install -y build-essential
+  sudo apt install -y libasound2-dev
+  #
+  sudo apt install -y whois
+  sudo apt install -y traceroute
+  sudo apt install -y tshark
+  sudo apt install -y qttools-dev-tools
+  sudo apt install -y qttools-dev
+  sudo apt install -y python3-pyqt5
+  sudo apt install -y gst123
+  sudo apt install -y gstreamer1.0-adapter-pulseeffects
+  sudo apt install -y gstreamer1.0-alsa
+  sudo apt install libcairo2-dev libgirepository1.0-dev pkg-config
+  sudo apt install libgirepository-2.0-dev
+  ```
+- Upgrade Python tooling and install the package:
+
+  ```bash
+  pip install --upgrade pip setuptools
+  pip install ipradar2
+  ```
 And check [READ_ME.txt](https://github.com/ClarkFieseln/IPRadar2ForLinux/blob/main/READ_ME.txt "READ_ME.txt") for more information.
 
 ## Overview
