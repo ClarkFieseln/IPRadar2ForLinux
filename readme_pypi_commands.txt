@@ -34,6 +34,8 @@ sudo apt install -y python3-pyqt5
 sudo apt install -y gst123
 sudo apt install -y gstreamer1.0-adapter-pulseeffects
 sudo apt install -y gstreamer1.0-alsa
+sudo apt install libcairo2-dev libgirepository1.0-dev pkg-config
+sudo apt install libgirepository-2.0-dev
 # PIP:
 # ----
 python3 -m pip install --upgrade pip
@@ -63,6 +65,7 @@ python3 -m pip install folium
 python3 -m pip install geographiclib
 python3 -m pip install pythonping
 python3 -m pip install geopy
+python3 -m pip install pygobject
 
 ########################
 # for test in test.pypi:
