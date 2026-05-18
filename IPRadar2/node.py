@@ -34,12 +34,3 @@ class NodeDataClass:
     time: str
     comm_partner_list: list
     comm_partner_list_killed: list
-
-@dataclass
-class DbIpCityResponse:
-    city: str
-    country: str
-    ip_address: str
-    latitude: float
-    longitude: float
-    region: str
