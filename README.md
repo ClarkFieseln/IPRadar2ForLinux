@@ -7,7 +7,6 @@
   sudo apt install -y python3-dev
   sudo apt install -y build-essential
   sudo apt install -y libasound2-dev
-  #
   sudo apt install -y whois
   sudo apt install -y traceroute
   sudo apt install -y tshark
