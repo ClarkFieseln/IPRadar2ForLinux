@@ -1,4 +1,27 @@
 ###########################
+# use of Config/config.ini in:
+#   tmp/ipradar2_venv/lib/python3.12/site-packages/IPRadar2
+# shall be replaced with use of config.ini in current relative path (!?)
+###########################
+
+###########################
+# set parameter ROUTER_IP automatically if left empty inside config.ini
+# parse e.g. with:
+# ip route | grep default
+###########################
+
+###########################
+# new parameter INSTALL_DEPENDENCIES = True / False
+# to install system packages automatically, e.g. with:
+#   sudo $(which apt) update
+#   sudo $(which apt) install ...
+###########################
+
+# add IPv6 support
+# for now, to cover "all" network traffic you need to deactivate IPv6 on your network interface.
+###########################
+
+###########################
 # add an "interface" between the .html map and IPRadar2
 # in order to have a smooth update of infos on the browser
 # e.g. INTERACTIVE MAP (as we did in old IPRadar):
@@ -37,7 +60,17 @@
 ###########################
 
 ###########################
-# OFFLINE Mode: with local geoIP-DB and previously stored files with host information
+# OFFLINE Mode for geolocation:
+# Option: geoip2 with MaxMind free GeoLite2 database (local, no API calls, fast)
+# MaxMind GeoLite2 offline and local (no HTTP calls, no rate limits, no 403 errors), and it's what most serious tools use!
+# Add comment for users: You just need to register for a free license key at maxmind.com to download the .mmdb file.
+# Implement like this:
+    import geoip2.database
+    with geoip2.database.Reader('/path/to/GeoLite2-City.mmdb') as reader:
+        response = reader.city(destination)
+        lat = response.location.latitude
+        lon = response.location.longitude
+        city = response.city.name
 ###########################
 
 ###########################
