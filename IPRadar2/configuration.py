@@ -41,7 +41,7 @@ LOGGING_LEVEL = "logging.INFO"
 # script or .exe?
 # the following parameters are determined at runtime (not stored in config.ini)
 IS_SCRIPT = True
-PATH_PREFIX = "./"
+PATH_PREFIX = "./dist_exec/"
 CONFIG_FILENAME = "IPRadar2/Config/config.ini"
 
 # rule name prepended to firewall rule
@@ -102,6 +102,9 @@ USE_DOUBLE_BUFFER = False
 # the GUI will be updated every (CHECK_PERIOD_IN_SEC * 2) seconds
 CHECK_PERIOD_IN_SEC = 0.5
 
+# plot after PLOT_PERIODS times CHECK_PERIOD_IN_SEC
+PLOT_PERIODS = 8
+
 # poll packet queue in seconds
 POLL_PACKET_QUEUE_IN_SEC = 0.0001
 
@@ -110,7 +113,6 @@ PACKED_OUTPUT = False
 
 # for drawing
 GeoLocationRadius = 0.1
-
 
 # public IP
 # can be found here:
