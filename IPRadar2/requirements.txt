@@ -1,3 +1,15 @@
+#######################################################################
+# this file was obtained inside IPRadar2ForLinux_venv at the same level of original project path with:
+# pipreqs --force ./ --ignore backups --mode compat
+# or
+# python ../IPRadar2ForLinux/updateRequirements.py
+# to be used inside new venv_copy to recover 'project dependencies' with:
+# pip install -r requirements.txt
+# NOTE: with pip freeze > requirements_venv_IPRadar2ForLinux.txt
+#       we can generate a requirments file to reproduce the 'complete venv dependencies'
+#       which can be recovered with:
+#       pip install -r requirements_venv_IPRadar2ForLinux.txt
+#######################################################################
 getmac~=0.8.2
 ip2geotools~=0.1.6
 playsound~=1.2.2
@@ -6,9 +18,7 @@ pycountry~=19.8.18
 PyQt5~=5.15.10
 pyshark~=0.6
 pythonping~=1.0.8
-Requests~=2.32.4
+Requests~=2.31.0
 
 folium~=0.15.1
 geographiclib~=2.0
-
-
