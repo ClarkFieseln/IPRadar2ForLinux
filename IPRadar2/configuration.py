@@ -50,7 +50,7 @@ RULE_NAME_STR = "IPRadar2-Block"
 # add a new rule in UFW Firewall to block a BAD-IP automatically
 # NOTE: if set to True, then you need to run the application as root!
 ADD_FIREWALL_RULE_BLOCK_BAD_IP = False
-ASK_BEFORE_ADDING_RULE= True
+ASK_BEFORE_ADDING_RULE = True
 
 # ask before killing processes
 ASK_BEFORE_KILL = True
@@ -101,8 +101,6 @@ USE_DOUBLE_BUFFER = False
 # to check: hosts resolutions, kill IPs, report updates, active connections
 # the GUI will be updated every (CHECK_PERIOD_IN_SEC * 2) seconds
 CHECK_PERIOD_IN_SEC = 0.5
-# plot after PLOT_PERIODS times CHECK_PERIOD_IN_SEC
-PLOT_PERIODS = 8
 
 # poll packet queue in seconds
 POLL_PACKET_QUEUE_IN_SEC = 0.0001
@@ -233,7 +231,7 @@ ONLY_ALARMS_SOUND = True
 USE_WHITE_LIST = True # if False then we'll use the Blacklist
 
 # Black List
-# see: https://dev.maxmind.com/geoip/legacy/codes/iso3166/
+# see: see: https://www.iso.org/obp/ui/#search
 BlackList = { # it's in fact a dictionary
 "A1":"Anonymous Proxy", 
 "A2":"Satellite Provider", 
@@ -243,13 +241,14 @@ BlackList = { # it's in fact a dictionary
 }
 
 # EXCLUSIVE White List
-# see: https://dev.maxmind.com/geoip/legacy/codes/iso3166/
+# see: see: https://www.iso.org/obp/ui/#search
 # NOTE: ZZ, None allows multicast connections
 WhiteList = { # it's in fact a dictionary
 "ZZ":"None",
 "BE":"Belgium", 
 "CH":"Switzerland", 
-"DE":"Germany", 
+"DE":"Germany",
+"CA":"Canada",
 "GB":"United Kingdom", 
 "HK":"Hong Kong",
 "IE":"Ireland", 
