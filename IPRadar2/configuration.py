@@ -41,7 +41,7 @@ LOGGING_LEVEL = "logging.INFO"
 # script or .exe?
 # the following parameters are determined at runtime (not stored in config.ini)
 IS_SCRIPT = True
-PATH_PREFIX = "./dist_exec/"
+PATH_PREFIX = "./"
 CONFIG_FILENAME = "IPRadar2/Config/config.ini"
 
 # rule name prepended to firewall rule
