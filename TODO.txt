@@ -17,6 +17,27 @@
 #   sudo $(which apt) install ...
 ###########################
 
+###########################
+# USE_DOUBLE_BUFFER (queues A, B) based on a configuration option
+# First check if there is really a performance improvement
+###########################
+
+###########################
+# OPTIONAL: ON/OFF
+# Filter in pyshark all known IPs in order to prevent analyzing unnecessary packets (?)
+# (if option is ON, this will falsify Data TX[KB], RX[KB])
+# First check if there is really a performance improvement
+###########################
+
+###########################
+# filter "Show selected countries", similar to "Show selected owners"
+###########################
+
+#################
+# implement live capture on/off (pause/resume)
+#################
+
+###########################
 # add IPv6 support
 # for now, to cover "all" network traffic you need to deactivate IPv6 on your network interface.
 ###########################
@@ -42,16 +63,7 @@
 ###########################
 
 ###########################
-# add IPv6 support
-# for now, to cover "all" network traffic you need to deactivate IPv6 on your network interface.
-###########################
-
-###########################
 # correct BUG: sometimes connections or nodes are not shown on the map
-###########################
-
-###########################
-# filter "Show selected countries", similar to "Show selected owners"
 ###########################
 
 ###########################
@@ -74,6 +86,11 @@
 ###########################
 
 ###########################
+# set Labels for known IPs "manually"
+# and then store in file
+###########################
+
+###########################
 # add a progress bar when opening files?...it may take some time until the tool reacts
 ###########################
 
@@ -91,6 +108,12 @@
 # e.g. avoid using big lists or dicts, use __mutex consistently.
 ###########################
 
+##################
+# load under "extreme conditions":
+# some IPs are missed e.g. when doing a "speedtest" while opening other tabs on the browser
+# -> too much traffic?...bottleneck in pyshark or in IPRadar2 ?
+##################
+
 ###########################
 # implement kill beyond bandwidth
 # see killSetting() in mainWindow.py
@@ -98,7 +121,7 @@
 
 ###########################
 # implement MAX_RX_KILOBYTES, similar to MAX_TX_KILOBYTES
-# RX on a remote host could mean that "we" are transmitting too much information to it
+# RX on a remote host could mean that "we" are transmitting too much information to it (leak!)
 ###########################
 
 ##################
@@ -159,16 +182,8 @@
 #     AL lib: (EE) ALCplaybackAlsa_open: Could not open playback device 'default': Device or resource busy
 #################
 
-#################
-# implement live capture on/off
-#################
-
 ###########################
 # when asking if we want to Kill, show also the affected process(es), ports, etc.
-###########################
-
-###########################
-# USE_DOUBLE_BUFFER (queues A, B) based on a configuration option
 ###########################
 
 ###########################
@@ -189,11 +204,6 @@
 ###########################
 # replace lists with dicts
 # to avoid for [] + for [] every time..
-###########################
-    
-###########################
-# set Labels for known IPs "manually"
-# and then store in file
 ###########################
 
 ###########################
@@ -224,10 +234,4 @@
 
 ##################
 # integrate the tool with snort, suricata, ...but how exactly?
-##################
-
-##################
-# load under "extreme conditions":
-# some IPs are missed e.g. when doing a "speedtest" while opening other tabs on the browser
-# -> too much traffic?...bottleneck in pyshark or in IPRadar2 ?
 ##################
