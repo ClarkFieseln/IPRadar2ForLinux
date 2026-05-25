@@ -1,13 +1,22 @@
 ###########################
-# use of Config/config.ini in:
-#   tmp/ipradar2_venv/lib/python3.12/site-packages/IPRadar2
-# shall be replaced with use of config.ini in current relative path (!?)
+# documentation example of script
+# ipradar2.sh to activate venv and execute tool from anywhere:
+#
+    #!/bin/bash
+    cd /some_path/Tools/ipradar2
+    source venv_ipradar2/bin/activate
+    ipradar2
+# NOTE:
+# you need first to:
+# - create the venv, e.g.:
+#   /some_path/Tools/ipradar2/venv_ipradar2
+# - install and run (once) ipradar2, so the folder IPRadar2 is created
 ###########################
 
 ###########################
-# set parameter ROUTER_IP automatically if left empty inside config.ini
-# parse e.g. with:
-# ip route | grep default
+# use of Config/config.ini in:
+#   tmp/ipradar2_venv/lib/python3.12/site-packages/IPRadar2
+# shall be replaced with use of config.ini in current relative path (!?)
 ###########################
 
 ###########################
@@ -15,6 +24,11 @@
 # to install system packages automatically, e.g. with:
 #   sudo $(which apt) update
 #   sudo $(which apt) install ...
+###########################
+
+###########################
+# dynamic update of interfaces needed
+# besides, crash when no network interface available -> fail gracefully or wait until available
 ###########################
 
 ###########################
@@ -30,12 +44,32 @@
 ###########################
 
 ###########################
+# BadConnectionKillerClass:
+# use something like get_connections() instead of netstat with CONN_ESTABLISHED_STR
+# see TODO: in source file
+###########################
+
+###########################
 # filter "Show selected countries", similar to "Show selected owners"
 ###########################
 
 #################
 # implement live capture on/off (pause/resume)
 #################
+
+###########################
+# OFFLINE Mode for geolocation:
+# Option: geoip2 with MaxMind free GeoLite2 database (local, no API calls, fast)
+# MaxMind GeoLite2 offline and local (no HTTP calls, no rate limits, no 403 errors), and it's what most serious tools use!
+# Add comment for users: You just need to register for a free license key at maxmind.com to download the .mmdb file.
+# Implement like this:
+    import geoip2.database
+    with geoip2.database.Reader('/path/to/GeoLite2-City.mmdb') as reader:
+        response = reader.city(destination)
+        lat = response.location.latitude
+        lon = response.location.longitude
+        city = response.city.name
+###########################
 
 ###########################
 # add IPv6 support
@@ -69,20 +103,6 @@
 ###########################
 # IGNORE IPs in a predefined netmask
 # e.g. to avoid processing specific subnetworks, when connected over SSH, which are otherwise considered to be global IPs (?)
-###########################
-
-###########################
-# OFFLINE Mode for geolocation:
-# Option: geoip2 with MaxMind free GeoLite2 database (local, no API calls, fast)
-# MaxMind GeoLite2 offline and local (no HTTP calls, no rate limits, no 403 errors), and it's what most serious tools use!
-# Add comment for users: You just need to register for a free license key at maxmind.com to download the .mmdb file.
-# Implement like this:
-    import geoip2.database
-    with geoip2.database.Reader('/path/to/GeoLite2-City.mmdb') as reader:
-        response = reader.city(destination)
-        lat = response.location.latitude
-        lon = response.location.longitude
-        city = response.city.name
 ###########################
 
 ###########################
