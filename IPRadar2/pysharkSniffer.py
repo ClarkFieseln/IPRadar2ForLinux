@@ -15,6 +15,7 @@ import subprocess
 from pathlib import Path
 import logging
 import asyncio
+import re
 
 
 
@@ -71,6 +72,28 @@ class pysharkSnifferClass:
 
     def getInterfaces(self):
         return self.tsharkInterfaces
+
+    def getRouterIp(self, interface: str) -> str | None:
+        """
+        Get the default gateway for a given interface name.
+        Works with physical (enp44s0, wlp43s0) and returns None for
+        virtual/special interfaces (lo, bluetooth, nflog, etc.)
+        """
+        try:
+            result = subprocess.run(
+                ["ip", "route", "show", "dev", interface],
+                capture_output=True, text=True, timeout=3
+            )
+            for line in result.stdout.splitlines():
+                if "default" in line:
+                    match = re.search(r"via\s+(\S+)", line)
+                    if match:
+                        return match.group(1)
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+        # return None
+        # leave unchanged
+        return configuration.ROUTER_IP
 
     def toggleHeatmap(self):
         if configuration.HEATMAP == True:
