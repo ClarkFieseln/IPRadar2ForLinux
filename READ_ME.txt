@@ -1,4 +1,4 @@
-Instructions to install IPRadar2 (2024.02.14):
+Instructions to install IPRadar2 (2026.05.25):
 
 **************************************************************************************************
 WARNING! 
@@ -30,9 +30,6 @@ Please consider this when using the tool.
      Alternatively, you may run the pip command with sudo:
          sudo pip install ipradar2
      In this case the installation is done in the normal site-packages directory (systemwide).
-     Here you may need to add missing tools:
-         sudo apt install whois
-         sudo apt install traceroute
      Then, just type ipradar2 in a terminal to start the program.
      Besides steps 3) and 4), you don't need to read anymore if you just want to use the tool.
      I suggest you use a separate environment.
@@ -47,10 +44,10 @@ Please consider this when using the tool.
        GitHub: https://github.com/ClarkFieseln/IPRadar2_for_Linux
        CodeProject: https://www.codeproject.com/Articles/5269206/IP-Radar-2
    Open PyCharm, press the button New Project -> select the location of the folder to place your new project.
-   (leave the default path to the virtual enviroment, which is inside your project folder (the new folder is called venv)).
-   Select Python39 or greater as the Base interpreter (a different interpeter may be selected, but you may need to adapt the dependencies later).
+   (leave the default path to the virtual environment, which is inside your project folder (the new folder is called venv)).
+   Select Python39 or greater as the Base interpreter (a different interpreter may be selected, but you may need to adapt the dependencies later).
    Don't inherit global site-packages, I think it is cleaner if we only depend on the things we really need.
-   We also don't need to make this new enviroment be available to all projects.
+   We also don't need to make this new environment be available to all projects.
 
    DEPRECATED?: You then get a Warning Message telling you that the "Directory is Not Empty" -> select "Create from Existing Sources"  (an .idea folder is created).
    Copy the contents of the folder with the sources copied in a previous step.
@@ -80,8 +77,7 @@ Please consider this when using the tool.
        Set ASK_BEFORE_ADDING_RULE=1 at the beginning to double-check before adding rules.
        Set ASK_BEFORE_KILL=1 at the beginning to double-check before killing a process.
        Make a backup of the ufw firewall settings every time you add rules, then you can always roll back to your previous settings.
-   Some other configuration parameters you shall ALWAYS check are:
-       - CONN_ESTABLISHED_STR
+   Some other configuration parameters you may need to check are:
        - ROUTER_IP
    And of course adapt the settings for host location (MY_CITY,...) and map center location (MAP_CENTER_LAT,...).
 
@@ -154,4 +150,3 @@ Please consider this when using the tool.
        https://github.com/ClarkFieseln/IPRadar2ForLinux
    The PyPI project is here:
        https://pypi.org/project/ipradar2
-
