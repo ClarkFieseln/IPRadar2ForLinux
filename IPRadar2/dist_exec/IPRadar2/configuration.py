@@ -7,7 +7,7 @@
 # *** local router
 # you can find it by typing on a terminal:
 # ip route | grep default
-ROUTER_IP = "192.168.178.1"
+ROUTER_IP=
 
 # capture tool
 # CAPTURE_TOOL = "tshark"
