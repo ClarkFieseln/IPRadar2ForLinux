@@ -500,6 +500,10 @@ class ProcessorClass(object):
             self.response_public['query'] =  self.public
             logging.info("Location:\n" + str(self.response_public))
 
+    # update MAC of router
+    def updateMacRouter(self):
+        self.mac_router = get_mac_address(ip=configuration.ROUTER_IP)
+
     # plot the map
     # Each time plotMap() is called we create NEW structures (latitude_local[]..) to draw.
     # This could be improved by storing and extending these structures instead, but we don't do that
