@@ -14,6 +14,7 @@ import os
 import psutil
 import re
 import logging
+import subprocess
 
 
 
@@ -36,6 +37,7 @@ class BadConnectionKillerClass(object):
     local = "127.0.0.0"  # will be set by processor
     doCheckActiveConnections = False
     numberOfConnections = 0
+    CONN_ESTABLISHED_STR = ""
 
     def __init__(self):
         # get PID of console child
@@ -47,6 +49,22 @@ class BadConnectionKillerClass(object):
         listOfPIDs = str(listOfPIDs)
         logging.info("children of parent = " + str(listOfPIDs))
         # append PIDs (of children) that we shall NOT kill..
+        ###
+        # TODO: use something like get_connections() instead of netstat with CONN_ESTABLISHED_STR
+        '''
+        def get_connections():
+            result = subprocess.run(
+                ["ss", "-anopH"],  # -H = no header, always machine-readable
+                capture_output=True, text=True
+            )
+            # State is always in English: ESTAB, LISTEN, TIME-WAIT, etc.
+            for line in result.stdout.splitlines():
+                parts = line.split()
+                state = parts[0]  # Always English regardless of locale
+                print(state, line)        
+        '''
+        self.CONN_ESTABLISHED_STR = self.get_connected_state_string()
+        ###
         while "pid=" in listOfPIDs:
             childPIDTemp = listOfPIDs[listOfPIDs.find("pid=") + 4:listOfPIDs.find(",")]
             self.dontKillPIDs.append(childPIDTemp)
@@ -57,13 +75,32 @@ class BadConnectionKillerClass(object):
         self.dontKillPIDs.append(str(self.parentPID))
         logging.info("dontKillPIDs = " + str(self.dontKillPIDs))
 
+    def get_connected_state_string(self) -> str:
+        """
+        Run netstat once and find what 'ESTABLISHED' looks like in the current locale.
+        Falls back to trying known translations.
+        """
+        # Known translations for ESTABLISHED across locales
+        known = [
+            "ESTABLISHED", "VERBUNDEN", "ÉTABLI", "ESTABLECIDO",
+            "CONNESSO", "CONECTADO", "УСТАНОВЛЕНО", "已建立"
+        ]
+        result = subprocess.run(
+            ["netstat", "-anolp"], capture_output=True, text=True
+        )
+        for line in result.stdout.splitlines():
+            for candidate in known:
+                if candidate in line.upper() or candidate in line:
+                    return candidate  # Return exactly as it appears
+        return "ESTABLISHED"  # fallback
+
     def setLocalIP(self, local):
         self.local = local
 
     def __killAll(self):
         try:
             logging.info("Checking connected IPs = ")
-            command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+            command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + self.CONN_ESTABLISHED_STR + "\" | grep \""
             command = command + self.local + "\""
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             out, err = p1.communicate()
@@ -122,7 +159,7 @@ class BadConnectionKillerClass(object):
             # __ipToKillList has list of IPs to kill
             for badIP in self.__ipToKillList:
                 logging.info("Checking bad IP = " + str(badIP))
-                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + self.CONN_ESTABLISHED_STR + "\" | grep \""
                 command = command + self.local + "\""
                 command = command + " | grep \""
                 command = command + badIP + "\""
@@ -179,12 +216,12 @@ class BadConnectionKillerClass(object):
             # now check for connections which are currently established
             logging.debug("Checking active connections..")
             if os.geteuid() == 0:
-                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + self.CONN_ESTABLISHED_STR + "\" | grep \""
                 command = command + self.local + "\""
             else:
                 # NOTE: with 2>/dev/null we throw away the std error,
                 #       otherwise we constantly get errors in output
-                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+                command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + self.CONN_ESTABLISHED_STR + "\" | grep \""
                 command = command + self.local + "\""
             p1 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             out, err = p1.communicate()
@@ -331,7 +368,7 @@ class BadConnectionKillerClass(object):
 
     def killIP(self, ip):
         logging.info("Kill requested IP = " + ip)
-        command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + configuration.CONN_ESTABLISHED_STR + "\" | grep \""
+        command = "netstat -anolp 2>/dev/null | grep -v unix | grep \"" + self.CONN_ESTABLISHED_STR + "\" | grep \""
         command = command + self.local + "\""
         command = command + " | grep \""
         command = command + ip + "\""
