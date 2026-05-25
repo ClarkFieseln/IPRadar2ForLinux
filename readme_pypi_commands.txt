@@ -56,7 +56,6 @@ python3 -m pip install sc-pylibs
 python3 -m pip install PyQt5
 python3 -m pip install playsound
 python3 -m pip install getmac
-python3 -m pip install ip2geotools
 python3 -m pip install psutil
 python3 -m pip install pycountry
 python3 -m pip install pyshark
