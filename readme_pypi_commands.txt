@@ -69,6 +69,15 @@ python3 -m pip install pygobject
 ########################
 # for test in test.pypi:
 ########################
+# clean-up
+> IPRadar2/Config/locationsResolved.json
+> IPRadar2/dist_exec/IPRadar2/Config/locationsResolved.json
+rm -rf IPRadar2/Output
+mkdir IPRadar2/Output
+touch IPRadar2/Output/note.txt
+rm -rf IPRadar2/dist_exec/IPRadar2/Output
+mkdir IPRadar2/dist_exec/IPRadar2/Output
+touch IPRadar2/dist_exec/IPRadar2//Output/note.txt
 # inside folder where the setup.py file is in, type:
 python3 -m pip install -e . --config-settings editable_mode=compat
 # rm -rf build dist *.egg-info
@@ -83,7 +92,16 @@ ipradar2
 ###
 
 # ------------------------------------------------------------------------------
-
+# clean-up
+> IPRadar2/Config/locationsResolved.json
+> IPRadar2/dist_exec/IPRadar2/Config/locationsResolved.json
+rm -rf IPRadar2/Output
+mkdir IPRadar2/Output
+touch IPRadar2/Output/note.txt
+rm -rf IPRadar2/dist_exec/IPRadar2/Output
+mkdir IPRadar2/dist_exec/IPRadar2/Output
+touch IPRadar2/dist_exec/IPRadar2//Output/note.txt
+# install
 pip install -I idna  # installs into the currently active Python environment
 (pip install -I --user idna   # installs into your user site-packages directory)
 python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
@@ -100,6 +118,15 @@ ipradar2
 ######################
 # for release in pypi:
 ######################
+# clean-up
+> IPRadar2/Config/locationsResolved.json
+> IPRadar2/dist_exec/IPRadar2/Config/locationsResolved.json
+rm -rf IPRadar2/Output
+mkdir IPRadar2/Output
+touch IPRadar2/Output/note.txt
+rm -rf IPRadar2/dist_exec/IPRadar2/Output
+mkdir IPRadar2/dist_exec/IPRadar2/Output
+touch IPRadar2/dist_exec/IPRadar2//Output/note.txt
 # inside folder where the setup.py file is in
 python3 setup.py sdist bdist_wheel
 twine check dist/*
