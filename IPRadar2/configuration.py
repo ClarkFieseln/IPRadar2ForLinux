@@ -7,21 +7,12 @@
 # *** local router
 # you can find it by typing on a terminal:
 # ip route | grep default
-ROUTER_IP = "192.168.178.1"
+ROUTER_IP = ""
 
 # capture tool
 # CAPTURE_TOOL = "tshark"
 # CAPTURE_TOOL = "dumpcap"
 CAPTURE_TOOL = ""
-
-# *** connection "established" has to be set to the corresponding language
-# run the following command:
-#     netstat -an
-# and check for "established" connections in column State
-CONN_ESTABLISHED_STR = "CONNECTED"
-# CONN_ESTABLISHED_STR = "ESTABLISHED"
-# CONN_ESTABLISHED_STR = "HERGESTELLT"
-# CONN_ESTABLISHED_STR = "VERBUNDEN"
 
 # to obtain interfaces, open cmd and type: tshark -D or dumpcap -D or sudo tshark -D or sudo dumpcap -D
 # if configured to blank, then the first available interface will be selected as a default
