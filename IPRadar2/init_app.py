@@ -195,9 +195,6 @@ def initConfig():
             if "RULE_NAME_STR" in config["myConfig"]:
                 configuration.RULE_NAME_STR = config['myConfig']['RULE_NAME_STR']
                 logging.info("RULE_NAME_STR = " + config['myConfig']['RULE_NAME_STR'])
-            if "CONN_ESTABLISHED_STR" in config["myConfig"]:
-                configuration.CONN_ESTABLISHED_STR = config['myConfig']['CONN_ESTABLISHED_STR']
-                logging.info("CONN_ESTABLISHED_STR = " + config['myConfig']['CONN_ESTABLISHED_STR'])
             if "TEXT_EDITOR" in config["myConfig"]:
                 configuration.TEXT_EDITOR = config['myConfig']['TEXT_EDITOR']
                 logging.info("TEXT_EDITOR = " + config['myConfig']['TEXT_EDITOR'])
