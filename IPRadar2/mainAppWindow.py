@@ -287,8 +287,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setFixedSize(self.size())
         currentTime = strftime("%Y.%m.%d - %H:%M:%S", gmtime())
-        userStr = "user: " + pwd.getpwuid(os.getuid()).pw_name
-        self.setWindowTitle("IPRadar2  (" + currentTime + ")  " + userStr)
+        userStr = "user=" + pwd.getpwuid(os.getuid()).pw_name
+        self.setWindowTitle("IPRadar2  (" + currentTime + ")  " + userStr + ", gateway=" + configuration.ROUTER_IP)
         # fill combo-box with tshark interfaces
         self.currentInterface = configuration.INTERFACE
         self.tsharkInterfaces = self.sniffer.getInterfaces()
@@ -319,6 +319,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # now fix some things
             configuration.INTERFACE = self.tsharkInterfacesList[0]
             self.sniffer.set_netmask()
+
+        # set router IP
+        ###############
+        configuration.ROUTER_IP = self.sniffer.getRouterIp(self.currentInterface)
+        self.sniffer.processorObject.updateMacRouter()
+        self.setTitle()
 
         # set colors
         ############
@@ -404,6 +410,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self._thread = self.MyGuiUpdateThread(self)
         self._thread.updated.connect(self.updateGui)
         self._thread.start()
+
+    def setTitle(self):
+        currentTime = strftime("%Y.%m.%d - %H:%M:%S", gmtime())
+        userStr = "user=" + pwd.getpwuid(os.getuid()).pw_name
+        self.setWindowTitle("IPRadar2  (" + currentTime + ")  " + userStr + ", gateway=" + configuration.ROUTER_IP)
 
     def createReportFile(self):
         reportFileString = './IPRadar2/Output/report_' + configuration.START_TIME + '.csv'
@@ -544,8 +555,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot(str)
     def on_comboBoxInterface_currentIndexChanged(self, p0):
         selectedIF = self.comboBoxInterface.currentIndex()
-        if selectedIF != 0:
+        if self.tsharkInterfacesList:
             self.currentInterface = self.tsharkInterfacesList[selectedIF]
+            configuration.ROUTER_IP = self.sniffer.getRouterIp(self.currentInterface)
+            self.sniffer.processorObject.updateMacRouter()
+            self.setTitle()
             logging.info("Selected capture interface = " + str(self.currentInterface))
 
     # change SETTINGS for killing automatically
